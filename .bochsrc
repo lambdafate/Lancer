@@ -1,0 +1,24 @@
+# Configuration file for Bochs
+###################################################################
+
+# how much memory the emulated machine will have
+megs: 32
+
+# filename of ROM images
+# romimage: file=/usr/local/share/bochs/BIOS-bochs-latest, address=0xfffe0000
+# vgaromimage: file=/usr/local/share/bochs/VGABIOS-lgpl-latest
+
+# what disk images will be used
+floppya: 1_44=/home/lambdafate/project/OS/Image, status=inserted
+
+# choose the boot disk
+boot: floppy
+
+# where do we send log message?
+log: bochsout.txt
+
+# disable the mouse
+mouse: enabled=0
+
+# enable key mapping, using US layout as default
+keyboard: type=mf, serial_delay=200, paste_delay=100000
