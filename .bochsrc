@@ -9,7 +9,7 @@ megs: 32
 # vgaromimage: file=/usr/local/share/bochs/VGABIOS-lgpl-latest
 
 # what disk images will be used
-floppya: 1_44=/home/lambdafate/project/OS/Image, status=inserted
+floppya: 1_44=./Image, status=inserted
 
 # choose the boot disk
 boot: floppy
