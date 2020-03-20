@@ -17,18 +17,17 @@
     ; let's begin the fucking boot sector!
     mov ax, JmpTargetCS
     mov es, ax
-    mov bx, JmpTargetIP
+    mov bx, JmpTargetIP             
     mov ah, 0x02
     mov al, LoadTargetSize
     mov ch, 0x00
     mov cl, 0x02
     mov dh, 0x00
     mov dl, 0x00
-    int 0x13
+    int 0x13                                ; read 'setup.asm' in boot disk
 
-    ; check if reading is successful
-    cmp ah, 0x00
-    je loadsuccess
+    ; check if reading is successful (cf=0 if success)
+    jnc loadsuccess              
     mov bh, 0x00
     mov ah, 0x03
     int 0x10
@@ -39,7 +38,7 @@
     mov al, 0x01
     mov bl, 0x04                        ; message color
     mov ah, 0x13
-    int 0x10
+    int 0x10                            ; display error message if failed, then stop runing
     jmp $
 
 loadsuccess:
