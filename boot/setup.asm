@@ -1,43 +1,65 @@
-;   file: /boot/setup.asm
+;  file: /boot/setup.asm
 ;   
+
+    CurrCS  equ 0x07e0
     
-    mov ax, 0xb800
+    mov ax, 0x07c0
+    mov ds, ax
+
+    ; display stepinfo
+    call readpoint
+    mov ax, CurrCS
     mov es, ax
-    mov di, 0x0000
+    mov bp, stepinfo
+    mov cx, 25
+    mov bl, 7
+    call print
 
-    mov cx, 25*80
-clear:
-    mov word [es:di], 0x0000
-    add di, 2
-    loop clear
-
+    ; read memory size, it support most 4G
     call read_memory_size
 
-    mov ax, 0xb800
-    mov es, ax
-    mov di, 0x0000
+    ; check if reading memory is successful
+    cmp eax, 0
+    jne display_memoryinfo
+    ; reading memory info failed
+    call readpoint
+    mov bp, memoryerror
+    mov cx, 28
+    mov bl, 4
+    call print
+    jmp $
 
-    mov cx, 25*80
+display_memoryinfo:
+    mov [ds:0x00], eax            ; store memory size to 0x7c00
+    ; convert 'eax' to Decimal, and store it in 'memoryinfo'
+    mov si, memoryinfo+20+3       ; es:esi -> momoryinfo: 0000 mb
+    mov edx, 0
+    mov ebx, 0x100000
+    div ebx
+    mov edx, 0
+    mov ebx, 10
+    mov ecx, 4
+_loopwrite:
+    div ebx
+    add dl, 0x30
+    mov [es:si], dl
+    mov edx, 0
+    dec si
+    loop _loopwrite
 
-    mov di, (12*80+32)*2
-    mov ax, cs
-    mov ds, ax
-    mov si, message
-    mov ah, 2
-    mov cx, 10
-display:
-    mov al, [ds:si]
-    mov [es:di], ax
-    inc si
-    add di, 2
-    loop display    
-
+    ; display memoryinfo
+    call readpoint
+    mov bp, memoryinfo
+    mov cx, 30
+    mov bl, 7
+    call print
     jmp $
 
 
-
-
+; return: eax-> memory size
 read_memory_size:
+    push es
+
     mov ax, 0x07c0
     mov es, ax
     mov di, 0x0000
@@ -59,37 +81,44 @@ _isreadfinished:
     je _readsucces
     jmp _loopread
 
-; display memory size
 _readsucces:   
-    mov ax, 0xb800
-    mov es, ax
-    mov di, (4*80+60)*2
-    mov byte [es:di], 'm'
-    mov byte [es:di+1], 4
-    sub di, 2
-
     mov eax, ebp
-    mov edx, 0
-    mov ebx, 0x100000
-    div ebx
-    mov edx, 0
-    mov ebx, 10
-    mov ecx, 4
-_loopdisplay:
-    div ebx
-    add dl, 0x30
-    mov [es:di], dl
-    mov byte [es:di+1], 4
-    mov edx, 0
-    sub di, 2
-    loop _loopdisplay
     jmp short _readfinish
-
 _readerror:
-    jmp $
-
+    mov eax, 0
 _readfinish:
+    pop es
     ret
 
+
+; es:bp -> string
+; cx    -> string size
+; bl    -> color
+print:
+    ; read lightpoint position, then display message
+    mov bh, 0x00
+    mov al, 0x01
+    mov ah, 0x13
+    int 0x10
+    ret
+
+readpoint:
+    mov bh, 0x00
+    mov ah, 0x03
+    int 0x10
+    ret
+
+
+
+
+stepinfo:
+    db "[/boot/setup          ]: "                      ; length 25
+
+memoryinfo:
+    db "reading memory size "                           ; length 30
+    db "0000 mb!", 13, 10
+
+memoryerror:
+    db "reading memory info error!", 13, 10              ; length 28
 message:
     db "Hello, OS!"

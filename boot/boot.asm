@@ -15,6 +15,22 @@
     LoadTargetSize  equ     0x02            ; setup's size (512byte*LoadTargetSize)
 
     ; let's begin the fucking boot sector!
+    ; set stack register
+    mov ax, 0x7c00
+    mov ss, ax
+    mov sp, 0x200
+
+    ; clear the screen 
+    mov ax, 0xb800
+    mov es, ax
+    mov bp, 0x0000
+    mov cx, 25*80
+clearscreen:
+    mov word [es:bp], 0x0000
+    add bp, 2
+    loop clearscreen
+
+    ; read the setup.asm
     mov ax, JmpTargetCS
     mov es, ax
     mov bx, JmpTargetIP             
@@ -26,32 +42,68 @@
     mov dl, 0x00
     int 0x13                                ; read 'setup.asm' in boot disk
 
+    ; set lightpoint position
+    mov bh, 0
+    mov dx, 0
+    mov ah, 2
+    int 0x10
+    ; display stepinfo
+    mov ax, 0x07c0
+    mov es, ax
+    mov bp, stepinfo
+    mov cx, 25
+    mov bl, 7
+    call print
+
     ; check if reading is successful (cf=0 if success)
     jnc loadsuccess              
-    mov bh, 0x00
-    mov ah, 0x03
-    int 0x10
-    mov ax, 0x07c0                      ; there should be 0x07c0, not 0x7c00
-    mov es, ax                          ; es:bp is message' display-position
+    ; loading setup.asm failed
+    call readpoint
     mov bp, errorinfo
-    mov cx, 29                          ; error message's size
-    mov al, 0x01
-    mov bl, 0x04                        ; message color
-    mov ah, 0x13
-    int 0x10                            ; display error message if failed, then stop runing
+    mov cx, 28                            ; error message's size
+    mov bl, 4                             ; message color
+    call print                            ; display error message if failed, then stop runing
     jmp $
 
 loadsuccess:
+    ; load setup.asm success
+    call readpoint
+    mov bp, successinfo
+    mov cx, 32
+    mov bl, 7
+    call print
+
     ; next, i will jmp to setup.
     ; jmp $
     jmp JmpTargetCS:JmpTargetIP
 
 
+; es:bp -> string
+; cx    -> string size
+; bl    -> color
+print:
+    ; read lightpoint position, then display message
+    mov bh, 0x00
+    mov al, 0x01
+    mov ah, 0x13
+    int 0x10
+    ret
+
+readpoint:
+    mov bh, 0x00
+    mov ah, 0x03
+    int 0x10
+    ret
+
+
+
+stepinfo:
+    db  "[/boot/boot           ]: "                                 ; length 25
+successinfo:
+    db "bootsector reading successful!", 13, 10                     ; length 32
 errorinfo:
     ; give some messages if reading error
-    db  13, 10 
-    db "bootsector reading error!"
-    db  13, 10 
+    db "bootsector reading error!", 13, 10                          ; length 28
 
     times 510-($-$$) db 0
     db 0x55, 0xaa
