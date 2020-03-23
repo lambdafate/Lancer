@@ -10,9 +10,15 @@
 ;
 
     ; declare some constant
-    JmpTargetCS     equ     0x07e0          ; setup's cp
-    JmpTargetIP     equ     0x0000          ; setup's ip
-    LoadTargetSize  equ     0x02            ; setup's size (512byte*LoadTargetSize)
+    MovePosition    equ     0x9000
+
+    SetupCS         equ     0x9020            ; load setup to 0x90000+512
+    SetupIP         equ     0x0000            ; setup: 0x9000:0x200 == 0x9020:0x0000
+    SetupSector     equ     0x02              ; setup's size (512byte*SetupSector)
+
+    KernelBase        equ     0x1000          ; load kernel to 0x10000
+    KernelOffset        equ     0x0000
+    KernelSector    equ     64
 
     ; let's begin the fucking boot sector!
     ; set stack register
@@ -30,23 +36,48 @@ clearscreen:
     add bp, 2
     loop clearscreen
 
-    ; read the setup.asm
-    mov ax, JmpTargetCS
-    mov es, ax
-    mov bx, JmpTargetIP             
-    mov ah, 0x02
-    mov al, LoadTargetSize
-    mov ch, 0x00
-    mov cl, 0x02
-    mov dh, 0x00
-    mov dl, 0x00
-    int 0x13                                ; read 'setup.asm' in boot disk
-
     ; set lightpoint position
     mov bh, 0
     mov dx, 0
     mov ah, 2
     int 0x10
+
+    ; mov this file to 0x9000:0x0000
+    call moveself
+    jmp MovePosition:movesuccess
+
+movesuccess:
+    ; read the setup.asm to 0x90000+512
+    mov ax, SetupCS
+    mov es, ax
+    mov bx, SetupIP             
+    mov al, SetupSector
+    mov ch, 0x00
+    mov cl, 0x02
+    mov dh, 0x00
+    call read_and_check
+
+    ; read kernel to 0x10000
+    mov ax, KernelBase
+    mov es, ax
+    mov bx, KernelOffset
+    mov al, KernelSector
+    mov ch, 0x00
+    mov cl, 0x05
+    mov dh, 0x00
+    call read_and_check
+
+    ; next, i will jmp to setup.
+    ; jmp $
+    jmp SetupCS:SetupIP
+
+
+read_and_check:
+    mov dl, 0x00
+    mov ah, 0x02
+    int 0x13                                
+
+    call readpoint
     ; display stepinfo
     mov ax, 0x07c0
     mov es, ax
@@ -57,7 +88,7 @@ clearscreen:
 
     ; check if reading is successful (cf=0 if success)
     jnc loadsuccess              
-    ; loading setup.asm failed
+    ; loading asm failed
     call readpoint
     mov bp, errorinfo
     mov cx, 28                            ; error message's size
@@ -73,9 +104,7 @@ loadsuccess:
     mov bl, 7
     call print
 
-    ; next, i will jmp to setup.
-    ; jmp $
-    jmp JmpTargetCS:JmpTargetIP
+    ret
 
 
 ; es:bp -> string
@@ -93,6 +122,24 @@ readpoint:
     mov bh, 0x00
     mov ah, 0x03
     int 0x10
+    ret
+
+moveself:
+    push ds
+    push es
+
+    mov ax, 0x07c0      ; note, it's 0x07c0
+    mov ds, ax
+    mov si, 0
+    mov ax, MovePosition
+    mov es, ax
+    mov di, 0
+    mov cx, 512
+    cld
+    rep movsb
+
+    pop es
+    pop ds
     ret
 
 

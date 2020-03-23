@@ -1,11 +1,22 @@
 ;  file: /boot/setup.asm
 ;   
 
-    CurrCS          equ     0x07e0
+    SetupCS         equ     0x9020      ; this file run from 0x9000:512, 0x90200
+    SetupIP         equ     0x0000
+
+    HardwareBase    equ     0x9000      ; load the hardware info to there
+    HardwareOffset  equ     0x0000
 
     GDTlIMIT        equ     39
-    GDTBaseR        equ     0x07d0  
-    GDTBaseP        equ     0x00007d00
+    GDTBaseR        equ     0x8000      ; it's base addr in real mode
+    GDTBaseP        equ     0x00080000  ; gdtr need the physical addr
+
+    KernelOldBase   equ     0x1000
+    KernelOldOffset equ     0x0000
+    KernelNewBase   equ     0x0000
+    KernelNewOffset equ     0x0000
+    KernelSector    equ     64
+    KernelSize      equ     KernelSector*512
 
     ; selectors
     CodeSelector    equ     0x08
@@ -20,9 +31,9 @@
 read_memory_size:
     push es
 
-    mov ax, 0x07c0
+    mov ax, HardwareBase
     mov es, ax
-    mov di, 0x0000
+    mov di, HardwareOffset      ; info will be loaded to HardwareBase:HardwareOffset
     mov ecx, 20
     mov ebx, 0
     mov ebp, 0
@@ -67,15 +78,38 @@ readpoint:
     int 0x10
     ret
 
+; move kernel's position
+movkernel:
+    push ds
+    push es
+    push si
+    push di
+
+    mov ax, KernelOldBase
+    mov ds, ax
+    mov si, KernelOldOffset
+    mov ax, KernelNewBase
+    mov es, ax
+    mov di, KernelNewOffset
+    mov cx, KernelSize/32       ; use movsd
+    cld
+    rep movsd
+
+    pop di
+    pop si
+    pop es
+    pop ds
+    ret
 
 
+    ; setup begin run from there
 begin_setup:
-    mov ax, 0x07c0
+    mov ax, HardwareBase    ; Hardware info will be stored to ds:0x00
     mov ds, ax
 
     ; display stepinfo
     call readpoint
-    mov ax, CurrCS
+    mov ax, SetupCS
     mov es, ax
     mov bp, stepinfo
     mov cx, 25
@@ -97,7 +131,7 @@ begin_setup:
     jmp $
 
 display_memoryinfo:
-    mov [ds:0x00], eax            ; store memory size to 0x7c00
+    mov [ds:HardwareOffset], eax            ; store memory size
     ; convert 'eax' to Decimal, and store it in 'memoryinfo'
     mov si, memoryinfo+20+3       ; es:esi -> momoryinfo: 0000 mb
     mov edx, 0
@@ -121,8 +155,8 @@ _loopwrite:
     mov bl, 7
     call print
 
-    ; loading kernel to 0x10000(64kb)
-
+    ; mov kernel to KernelNewBase:KernelNewOffset
+    call movkernel
 
     ; prepare for into protected mode
     mov ax, GDTBaseR
@@ -131,8 +165,8 @@ _loopwrite:
     mov dword [ds:0x00], 0x00000000
     mov dword [ds:0x04], 0x00000000
 
-    mov dword [ds:0x08], 0x7e0003ff         ; 代码段
-    mov dword [ds:0x0c], 0x00409800         
+    mov dword [ds:0x08], 0x020003ff         ; 代码段
+    mov dword [ds:0x0c], 0x00409809         
 
     mov dword [ds:0x10], 0x80007fff         ; screen display
     mov dword [ds:0x14], 0x0040920b
@@ -144,7 +178,7 @@ _loopwrite:
     mov dword [ds:0x24], 0x00409600
 
     ; 填写GDTR
-    lgdt [cs:gdtinfo]   ; cs=0x07e0
+    lgdt [cs:gdtinfo]   
 
     ; 打开A20
     in al, 0x92
