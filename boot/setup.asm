@@ -1,28 +1,9 @@
 ;  file: /boot/setup.asm
 ;   
 
-    SetupCS         equ     0x9020      ; this file run from 0x9000:512, 0x90200
-    SetupIP         equ     0x0000
+    %include "boot/include/setup.inc"
+    %include "boot/include/page.inc"
 
-    HardwareBase    equ     0x9000      ; load the hardware info to there
-    HardwareOffset  equ     0x0000
-
-    GDTlIMIT        equ     39
-    GDTBaseR        equ     0x8000      ; it's base addr in real mode
-    GDTBaseP        equ     0x00080000  ; gdtr need the physical addr
-
-    KernelOldBase   equ     0x1000
-    KernelOldOffset equ     0x0000
-    KernelNewBase   equ     0x0000
-    KernelNewOffset equ     0x0000
-    KernelSector    equ     64
-    KernelSize      equ     KernelSector*512
-
-    ; selectors
-    CodeSelector    equ     0x08
-    ScreenSelector  equ     0x10
-    DataSelector    equ     0x18
-    StackSelector   equ     0x20
 
     jmp begin_setup
 
@@ -165,7 +146,7 @@ _loopwrite:
     mov dword [ds:0x00], 0x00000000
     mov dword [ds:0x04], 0x00000000
 
-    mov dword [ds:0x08], 0x020003ff         ; 代码段
+    mov dword [ds:0x08], 0x020003ff         ; 代码段, only exec, no read, no write
     mov dword [ds:0x0c], 0x00409809         
 
     mov dword [ds:0x10], 0x80007fff         ; screen display
@@ -193,26 +174,107 @@ _loopwrite:
     or eax, 1
     mov cr0, eax
 
-    jmp dword 0x08:flush
+    jmp dword CodeSelector:flush
 
     [bits 32]
 flush:
     mov ax, DataSelector
     mov ds, ax
 
+    ; open paging
+    ; 1. create pages
+    call create_page
+    
+    ; note, note, note!!!
+    ; there can't use [cs:gdtinfo], because cs segment can't be written, can't be read
+    sgdt [ds:SetupProtectBase + gdtinfo]
+    add dword [ds:SetupProtectBase + gdtinfo + 2], 0xc0000000
+
+    mov ebx, GDTBaseP
+    add ebx, 12
+    mov ecx, 4
+_changebase:
+    add dword [ds:ebx], 0xc0000000
+    add ebx, 8
+    loop _changebase
+
+    ; 2. change cr3 -> pde
+    mov eax, PAGE_DIR_TABLE_POS
+    mov cr3, eax
+
+    ; 3. change cr0 -> PG=1, PG is last bit in cr0
+    mov eax, cr0
+    or eax, 0x80000000
+    mov cr0, eax                ; success open paging 
+
+    ; note, note, note  there can't use [cs:gdtinfo], because cs segmeng can't be read!!!
+    ; fuck, this fault spent my a whole afternoon!!!
+    lgdt [ds:SetupProtectBase + gdtinfo]
+    ; using new selector
+    jmp dword CodeSelector:flushpage
+
+flushpage:
     mov ax, StackSelector
     mov ss, ax
     mov esp, 0x7c00
 
     mov ax, ScreenSelector
     mov es, ax
-
     push esp
-
     mov ebx, (20*80+40)*2
     mov byte [es:ebx], 'Y'
     mov byte [es:ebx+1], 4 
+
     jmp $
+
+
+
+
+create_page:
+    mov ecx, 4096
+    mov esi, 0
+_clearpde:                                          ; clear pde
+    mov byte [ds:PAGE_DIR_TABLE_POS+esi], 0
+    inc esi
+    loop _clearpde;
+_createpde:
+    mov eax, PAGE_DIR_TABLE_POS
+    add eax, 0x1000                                 ; eax->first page
+    mov ebx, eax
+
+    or eax, PAGE_P | PAGE_RW_W | PAGE_US_U
+
+    mov [ds:PAGE_DIR_TABLE_POS+0x000], eax          ; pde0 -> eax
+    mov [ds:PAGE_DIR_TABLE_POS+0xc00], eax          ; pde0x300 -> eax
+
+    sub eax, 0x1000
+    mov [ds:PAGE_DIR_TABLE_POS+4092], eax           
+
+    mov ecx, 256        ; 2mb/4kb
+    mov esi, 0
+    mov edx, PAGE_P | PAGE_RW_W | PAGE_US_U
+_createpte:
+    mov [ds:ebx+esi], edx
+    add esi, 4
+    add edx, 4096
+    loop _createpte
+
+    mov eax, PAGE_DIR_TABLE_POS
+    add eax, 0x2000
+    or eax, PAGE_P | PAGE_RW_W | PAGE_US_U
+    mov ebx, PAGE_DIR_TABLE_POS
+    mov esi, 769
+    mov ecx, 254                ; kernel pde index: 768~1022, 768->first page, 769~1022->second page
+_createother:
+    mov [ds:ebx+esi*4], eax
+    inc esi
+    add eax, 0x1000
+    loop _createother
+    ret
+
+
+
+
 
 
 ; gdt data
@@ -229,5 +291,4 @@ memoryinfo:
 
 memoryerror:
     db "reading memory info error!", 13, 10              ; length 28
-message:
-    db "Hello, OS!"
+

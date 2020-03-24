@@ -9,16 +9,8 @@
 ;   time  : 2020/03/10 
 ;
 
-    ; declare some constant
-    MovePosition    equ     0x9000
+    %include "boot/include/boot.inc"
 
-    SetupCS         equ     0x9020            ; load setup to 0x90000+512
-    SetupIP         equ     0x0000            ; setup: 0x9000:0x200 == 0x9020:0x0000
-    SetupSector     equ     0x02              ; setup's size (512byte*SetupSector)
-
-    KernelBase        equ     0x1000          ; load kernel to 0x10000
-    KernelOffset        equ     0x0000
-    KernelSector    equ     64
 
     ; let's begin the fucking boot sector!
     ; set stack register
