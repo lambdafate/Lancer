@@ -1,0 +1,38 @@
+Elf32_Addr  4
+Elf32_Half  2
+Elf32_Off   4
+Elf32_SWord 4
+Elf32_Word  4
+unsigned char   1
+
+
+#define EI_NIDENT 16
+typedef struct{                                 offset
+  unsigned char  e_ident[EI_NIDENT];                0
+  Elf32_Half e_type;                               16
+  Elf32_Half e_machine;                            18
+  Elf32_Word e_version;                            20
+  Elf32_Addr e_entry;                              24
+  Elf32_Off e_phoff;                               28 -----program header offset
+  Elf32_Off e_shoff;                               32
+  Elf32_Word e_flags;                              36
+  Elf32_Half e_ehsize;                             40
+  Elf32_Half e_phentsize;                          42 -----program header entry's size
+  Elf32_Half e_phnum;                              44 -----program header entry's num
+  Elf32_Half e_shentsize;                          46
+  Elf32_Half e_shnum;                              48
+  Elf32_Half e_shstrndx;                           50
+}Elf32_Ehdr;
+
+
+
+typedef struct{                                offset
+    Elf32_Word p_type;                              0
+    Elf32_Off p_offset;                             4 ---- segment offset
+    Elf32_Addr p_vaddr;                             8 ---- load to here
+    Elf32_Addr p_paddr;                            12 
+    Elf32_Word p_filesz;                           16 ---- segment size
+    Elf32_Word p_memsz;                            20
+    Elf32_Word p_flage;                            24
+    Elf32_Word p_align;                            28
+} Elf32_phdr;
