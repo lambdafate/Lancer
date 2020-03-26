@@ -44,19 +44,15 @@ movesuccess:
     mov es, ax
     mov bx, SetupIP             
     mov al, SetupSector
-    mov ch, 0x00
-    mov cl, 0x02
-    mov dh, 0x00
+    mov cl, SetupBeginSector
     call read_and_check
 
-    ; read kernel to 0x10000
+    ; read kernel
     mov ax, KernelBase
     mov es, ax
     mov bx, KernelOffset
     mov al, KernelSector
-    mov ch, 0x00
-    mov cl, 0x05
-    mov dh, 0x00
+    mov cl, KernelBeginSector
     call read_and_check
 
     ; next, i will jmp to setup.
@@ -65,6 +61,8 @@ movesuccess:
 
 
 read_and_check:
+    mov ch, 0x00
+    mov dh, 0x00
     mov dl, 0x00
     mov ah, 0x02
     int 0x13                                

@@ -11,12 +11,10 @@
     GDTBaseR        equ     0x8000      ; it's base addr in real mode
     GDTBaseP        equ     0x00080000  ; gdtr need the physical addr
 
-    KernelOldBase   equ     0x1000
-    KernelOldOffset equ     0x0000
-    KernelNewBase   equ     0x0000
-    KernelNewOffset equ     0x0000
-    KernelSector    equ     64
-    KernelSize      equ     KernelSector*512
+    KernelLoadAddr      equ     0x50000   ; boot.asm will load kernel here
+    KernelVirtualAddr   equ     0xc0010000      ; setup.asm will extend kernel follow elf
+    ; KernelSector    equ     64
+    ; KernelSize      equ     KernelSector*512
 
     ; selectors
     CodeSelector    equ     0x08

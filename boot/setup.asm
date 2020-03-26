@@ -60,27 +60,29 @@ readpoint:
     ret
 
 ; move kernel's position
-movkernel:
-    push ds
-    push es
-    push si
-    push di
+; movkernel:
+;     push ds
+;     push es
+;     push si
+;     push di
 
-    mov ax, KernelOldBase
-    mov ds, ax
-    mov si, KernelOldOffset
-    mov ax, KernelNewBase
-    mov es, ax
-    mov di, KernelNewOffset
-    mov cx, KernelSize/32       ; use movsd
-    cld
-    rep movsd
+;     mov ax, KernelOldBase
+;     mov ds, ax
+;     mov si, KernelOldOffset
+;     mov ax, KernelNewBase
+;     mov es, ax
+;     mov di, KernelNewOffset
+;     mov cx, KernelSize/32       ; use movsd
+;     cld
+;     rep movsd
 
-    pop di
-    pop si
-    pop es
-    pop ds
-    ret
+;     pop di
+;     pop si
+;     pop es
+;     pop ds
+;     ret
+
+
 
 
     ; setup begin run from there
@@ -137,7 +139,7 @@ _loopwrite:
     call print
 
     ; mov kernel to KernelNewBase:KernelNewOffset
-    call movkernel
+    ; call movkernel
 
     ; prepare for into protected mode
     mov ax, GDTBaseR
@@ -217,10 +219,24 @@ flushpage:
     mov ax, StackSelector
     mov ss, ax
     mov esp, 0x7c00
+    
+    call kernel_init            ; init kernel, prepare for leaving setup and jmping to kernel
+
+    mov ax, DataSelector
+    mov ds, ax
+    mov es, ax
+
+    mov esi, 0x90000
+    mov edi, 0x7c00
+    mov ecx, 1000
+    rep movsb    
 
     mov ax, ScreenSelector
     mov es, ax
+
     push esp
+    pop eax
+
     mov ebx, (20*80+40)*2
     mov byte [es:ebx], 'Y'
     mov byte [es:ebx+1], 4 
@@ -229,7 +245,48 @@ flushpage:
 
 
 
+; init kernel, extend kernel to virtual address according to kernel's elf header
+kernel_init:
+    mov eax, 0
+    mov ebx, 0
+    mov ecx, 0
+    mov edx, 0
 
+    mov ax, DataSelector
+    mov es, ax
+    mov ds, ax
+
+    mov dx, [ds:KernelLoadAddr+42]   ; e_pdentsize, program header entry's size
+    mov ebx, [ds:KernelLoadAddr+28]  ; e_phoff(it should be 0x34), first program header's offset(from file begin)
+    mov cx, [ds:KernelLoadAddr+44]   ; e_phnum, program header entry's num
+    add ebx, KernelLoadAddr
+
+_deal_each_segment:
+    cmp dword [ds:ebx+0], 0x00       ; if p_type==PT_NULL(00), we should not load it
+    je _dealnext
+
+    cld
+    push ecx
+    mov esi, KernelLoadAddr          ; note, move data: ds:esi-->es:edi
+    add esi, [ds:ebx+4]              ; you must think about what the fuck are es and ds
+    mov edi, [ds:ebx+8]              ; if (ds and es)'s base addr is 0x00, it works well
+    mov ecx, [ds:ebx+16]             ; if not, for example their base addr is 0xc0000000, and
+    rep movsb                        ; meantime the edi(vritual addr) is 0xc0010000 
+    mov eax, 1                       ; it will make you fuck yourself. don't say anything, i first
+    pop ecx
+
+_dealnext:
+    add ebx, edx
+    loop _deal_each_segment
+
+    mov eax, [ds:KernelLoadAddr+24]     ; e_entry
+    ret
+
+
+
+
+
+; create virtual pages, prepare for opening paging
 create_page:
     mov ecx, 4096
     mov esi, 0
