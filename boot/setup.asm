@@ -199,6 +199,7 @@ _changebase:
     add dword [ds:ebx], 0xc0000000
     add ebx, 8
     loop _changebase
+    sub dword [ds:GDTBaseP+28], 0xc0000000          ; don't change data segment
 
     ; 2. change cr3 -> pde
     mov eax, PAGE_DIR_TABLE_POS
@@ -220,33 +221,38 @@ flushpage:
     mov ss, ax
     mov esp, 0x7c00
     
-    call kernel_init            ; init kernel, prepare for leaving setup and jmping to kernel
-
     mov ax, DataSelector
-    mov ds, ax
-    mov es, ax
-
-    mov esi, 0x90000
-    mov edi, 0x7c00
-    mov ecx, 1000
-    rep movsb    
+    mov ds, ax  
 
     mov ax, ScreenSelector
     mov es, ax
-
-    push esp
-    pop eax
 
     mov ebx, (20*80+40)*2
     mov byte [es:ebx], 'Y'
     mov byte [es:ebx+1], 4 
 
-    jmp $
+    call kernel_init            ; init kernel, prepare for leaving setup and jmping to kernel
+    call rewite_code_selector
+    
+    jmp CodeSelector:0x0000     ; jmp to kernel, 0xc0010000
+
+
+; eax: e_entry, kernel' begin addr
+rewite_code_selector:
+    mov ebx, GDTBaseP
+    add ebx, 8
+    mov dword [ds:ebx+0x00], 0x0000ffff             ; cs->base=0xc0010000, limit=0xfffff 
+    mov dword [ds:ebx+0x04], 0xc04f9801             ; new code segment, only exec, 
+    ret
+
 
 
 
 ; init kernel, extend kernel to virtual address according to kernel's elf header
 kernel_init:
+    push ds
+    push es
+
     mov eax, 0
     mov ebx, 0
     mov ecx, 0
@@ -278,7 +284,9 @@ _deal_each_segment:
 _dealnext:
     add ebx, edx
     loop _deal_each_segment
-
+    
+    pop es
+    pop ds
     mov eax, [ds:KernelLoadAddr+24]     ; e_entry
     ret
 
