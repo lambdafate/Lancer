@@ -2,8 +2,10 @@
 ;   boot.asm, it is a little boot sector. it's size is 512byte
 ;   BIOS will load this file to 0x0000:0x7c00(cs:ip), and run in real mode
 ;   the main function of this file:
-;        1. load the setup.asm to memory(0x7e00)
-;        2. jmp to the setup.asm(cs=0x07e0, ip=0x0000)
+;        0. move this file to 0x90000, and continue execute
+;        1. load the setup.asm to memory(0x90000+512=0x90200)
+;        2. load the kernel to memory(0x50000)
+;        3. jmp to the setup.asm(cs=0x9020, ip=0x0000)
 ;    
 ;   author: lambdafate
 ;   time  : 2020/03/10 
