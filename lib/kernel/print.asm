@@ -13,7 +13,9 @@
 section .text
 
 global put_char         ; it exports put_char
-global put_str         
+global put_str 
+global put_hex
+global put_int        
 
 put_char:
     pushad          ; it will push 8 registers(32 byte) to stack
@@ -114,6 +116,63 @@ _printstr_finish:
     pop eax
     pop ds
 
+    ret
+
+
+; put_hex
+put_hex:
+    pushad
+    
+    mov edx, [ss:esp+36]
+    mov eax, edx
+    mov ecx, 8
+_eachfourbits:
+    and eax, 0x0000000f
+    cmp al, 9
+    ja _turnae           ; a~f
+    add al, 48
+    jmp _dealnext
+_turnae:
+    add al, 55
+_dealnext:
+    push eax
+    shr edx, 4
+    mov eax,edx 
+    loop _eachfourbits
+
+    mov ecx, 8
+_printeachhex:
+    call put_char                   ; you must clean stack after you call put_char
+    add esp, 4                      ; alse it would't work well
+
+    loop _printeachhex
+    popad
+    ret
+
+
+; put_int
+put_int:
+    pushad
+    mov eax, [ss:esp+36]
+    xor edx, edx
+    mov edi, 10
+    mov ecx, 0
+_eachint:
+    div edi
+    add edx, 48
+    push edx
+    inc ecx
+    cmp eax, 0
+    je _printeachint
+    xor edx, edx
+    jmp _eachint    
+
+_printeachint:
+    call put_char
+    add esp, 4                      ; note clean stack arg
+    loop _printeachint    
+
+    popad
     ret
 
 
