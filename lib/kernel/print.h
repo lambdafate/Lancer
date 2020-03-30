@@ -1,9 +1,11 @@
 #ifndef _LIB_KERNEL_PRINT_H
 #define _LIB_KERNEL_PRINT_H
 
-    void put_char(unsigned char ascii);
-    void put_str(char* str);
-    void put_hex(int num);
-    void put_int(int num);
+#include "stdint.h"
+
+void put_char(uint8_t ascii);
+void put_str(int8_t* str);
+void put_hex(int32_t num);
+void put_int(int32_t num);
 
 #endif
