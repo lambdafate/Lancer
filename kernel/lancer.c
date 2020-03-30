@@ -1,4 +1,5 @@
 #include "print.h"
+#include "init.h"
 
 void test_func_put_char();
 void test_func_put_char();
@@ -9,6 +10,10 @@ void welcome();
 int main(){
 
 	welcome();
+	hardware_init();
+
+	asm volatile ("sti");
+	//test_func_put_char();
 
 	//test_func_put_hex();
 	//test_func_put_int();
@@ -23,6 +28,8 @@ void welcome(){
 
 
 void test_func_put_char(){
+
+	put_char('a'); put_char(' ');put_char('b'); put_char('\t'); put_char('c');put_char('\n');
 	// test put_char
 	put_char('f'); put_char('u'); put_char('c'); put_char('k');
 

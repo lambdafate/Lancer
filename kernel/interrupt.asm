@@ -5,19 +5,26 @@
 %define ERROR_CODE  nop
 %define ZERO        push 0
 
-interrupt_message:  db "interrupt happy!", 0
+section .data
+interrupt_message:  db "  interrupt happy!", 13, 10, 0
 
 extern put_str
+extern put_int
+
 global interrupt_handler_table
 interrupt_handler_table:
 
-%macro Vector 2
+%macro VECTOR 2
 section .data
     dd interrupt_handler_entry%1
 
 section .text
 interrupt_handler_entry%1:
     %2
+
+    push %1
+    call put_int
+    add esp, 4
     
     push interrupt_message
     call put_str
@@ -29,43 +36,42 @@ interrupt_handler_entry%1:
 
     add esp, 4
     iret
+
 %endmacro
 
 
 
 
-Vector 0, ZERO
-Vector 1, ZERO
-Vector 2, ZERO
-Vector 3, ZERO
-Vector 4, ZERO
-Vector 5, ZERO
-Vector 6, ZERO
-Vector 7, ZERO
-Vector 8, ERROR_CODE
-Vector 9, ZERO
-Vector 10, ERROR_CODE
-Vector 11, ERROR_CODE
-Vector 12, ERROR_CODE
-Vector 13, ERROR_CODE
-Vector 14, ERROR_CODE
-Vector 15, ZERO
-Vector 16, ZERO
-Vector 17, ERROR_CODE
-Vector 18, ZERO
-Vector 19, ZERO
-Vector 20, ZERO
-Vector 21, ZERO
-Vector 22, ZERO
-Vector 23, ZERO
-Vector 24, ZERO
-Vector 25, ZERO
-Vector 26, ZERO
-Vector 27, ZERO
-Vector 28, ZERO
-Vector 29, ZERO
-Vector 30, ZERO
-Vector 31, ZERO
-
-
-Vector 32, ZERO
+VECTOR 0x00,ZERO
+VECTOR 0x01,ZERO
+VECTOR 0x02,ZERO
+VECTOR 0x03,ZERO 
+VECTOR 0x04,ZERO
+VECTOR 0x05,ZERO
+VECTOR 0x06,ZERO
+VECTOR 0x07,ZERO 
+VECTOR 0x08,ERROR_CODE
+VECTOR 0x09,ZERO
+VECTOR 0x0a,ERROR_CODE
+VECTOR 0x0b,ERROR_CODE 
+VECTOR 0x0c,ZERO
+VECTOR 0x0d,ERROR_CODE
+VECTOR 0x0e,ERROR_CODE
+VECTOR 0x0f,ZERO 
+VECTOR 0x10,ZERO
+VECTOR 0x11,ERROR_CODE
+VECTOR 0x12,ZERO
+VECTOR 0x13,ZERO 
+VECTOR 0x14,ZERO
+VECTOR 0x15,ZERO
+VECTOR 0x16,ZERO
+VECTOR 0x17,ZERO 
+VECTOR 0x18,ERROR_CODE
+VECTOR 0x19,ZERO
+VECTOR 0x1a,ERROR_CODE
+VECTOR 0x1b,ERROR_CODE 
+VECTOR 0x1c,ZERO
+VECTOR 0x1d,ERROR_CODE
+VECTOR 0x1e,ERROR_CODE
+VECTOR 0x1f,ZERO 
+VECTOR 0x20,ZERO
