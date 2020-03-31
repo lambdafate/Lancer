@@ -5,37 +5,43 @@
 %define ERROR_CODE  nop
 %define ZERO        push 0
 
-section .data
-interrupt_message:  db "  interrupt happy!", 13, 10, 0
+extern interrupt_handler_table
+global interrupt_handler_entrys
 
-extern put_str
-extern put_int
+section .data               ; you can't delete this line, or it will not find handler entry
+                            ; when you call int xx
 
-global interrupt_handler_table
-interrupt_handler_table:
+interrupt_handler_entrys:
 
 %macro VECTOR 2
-section .data
-    dd interrupt_handler_entry%1
-
 section .text
 interrupt_handler_entry%1:
     %2
 
+    push ds
+    push es
+    push gs
+    push fs
+    pushad
+
     push %1
-    call put_int
-    add esp, 4
-    
-    push interrupt_message
-    call put_str
+    call [interrupt_handler_table + %1*4]
     add esp, 4
 
     mov al, 0x20
     out 0xa0, al
     out 0x20, al
 
+    popad   
+    pop fs
+    pop gs
+    pop es
+    pop ds
+
     add esp, 4
     iret
+section .data
+    dd interrupt_handler_entry%1
 
 %endmacro
 

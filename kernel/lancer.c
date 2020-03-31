@@ -13,6 +13,8 @@ int main(){
 	hardware_init();
 
 	asm volatile ("sti");
+	asm volatile ("int $0");
+	asm volatile ("cli");
 	//test_func_put_char();
 
 	//test_func_put_hex();
