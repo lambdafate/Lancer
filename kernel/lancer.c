@@ -1,5 +1,8 @@
+#define DEBUG
+
 #include "print.h"
 #include "init.h"
+#include "debug.h"
 
 void test_func_put_char();
 void test_func_put_char();
@@ -11,10 +14,19 @@ int main(){
 
 	welcome();
 	hardware_init();
+	uint32_t memory = 1;
+	asm volatile ("movl 0xc0090000, %0": "=r"(memory));
+	put_int(memory/1024/1024);
+	put_char('\n');
+	uint32_t* pointer = 0xc0090000;
+	put_int((*pointer)/1024/1024);
 
-	asm volatile ("sti");
-	asm volatile ("int $0");
-	asm volatile ("cli");
+	//asm volatile ("sti");
+	// asm volatile ("int $0");
+	// asm volatile ("cli");
+	
+	// ASSERT(1 != 1);
+	
 	//test_func_put_char();
 
 	//test_func_put_hex();
