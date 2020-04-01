@@ -13,7 +13,7 @@ NASMCompile	= nasm $(NASMARGS)
 
 LANCER_OBJECT	=  $(BUILDDIR)/lancer.o $(BUILDDIR)/interrupt_c.o \
 	$(BUILDDIR)/init.o $(BUILDDIR)/timer.o $(BUILDDIR)/debug.o $(BUILDDIR)/print.o \
-	$(BUILDDIR)/interrupt_asm.o
+	$(BUILDDIR)/interrupt_asm.o $(BUILDDIR)/string.o $(BUILDDIR)/bitmap.o
 
 
 # BOOT and SETUP
@@ -30,17 +30,23 @@ $(BUILDDIR)/interrupt_c.o: ./kernel/interrupt.c
 	$(GCCCompile) -c $^ -o $@
 $(BUILDDIR)/init.o: ./kernel/init.c
 	$(GCCCompile) -c $^ -o $@
-$(BUILDDIR)/timer.o: ./device/timer.c
-	$(GCCCompile) -c $^ -o $@
+
+
 $(BUILDDIR)/debug.o: ./kernel/debug.c
 	$(GCCCompile) -c $^ -o $@
+$(BUILDDIR)/interrupt_asm.o: ./kernel/interrupt.asm
+	$(NASMCompile) $^ -o $@
 
 
+$(BUILDDIR)/string.o: ./lib/kernel/string.c
+	$(GCCCompile) -c $^ -o $@
+$(BUILDDIR)/bitmap.o: ./lib/kernel/bitmap.c
+	$(GCCCompile) -c $^ -o $@
 $(BUILDDIR)/print.o: ./lib/kernel/print.asm
 	$(NASMCompile) $^ -o $@
 
-$(BUILDDIR)/interrupt_asm.o: ./kernel/interrupt.asm
-	$(NASMCompile) $^ -o $@
+$(BUILDDIR)/timer.o: ./device/timer.c
+	$(GCCCompile) -c $^ -o $@
 
 
 $(BUILDDIR)/LANCER: $(LANCER_OBJECT)
