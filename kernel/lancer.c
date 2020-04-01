@@ -3,6 +3,10 @@
 #include "print.h"
 #include "init.h"
 #include "debug.h"
+#include "bitmap.h"
+#include "string.h"
+
+typedef void (* func)(uint8_t*);
 
 void test_func_put_char();
 void test_func_put_char();
@@ -21,6 +25,33 @@ int main(){
 	uint32_t* pointer = 0xc0090000;
 	put_int((*pointer)/1024/1024);
 
+	BITMAP bitmap;
+	bitmap.size = 10;
+	bitmap.bits = 0x7c00;
+	
+	memory_set(bitmap.bits, 10, 3);
+	// bitmap_init(&bitmap);
+
+	uint8_t* p = 0x7c00;
+	int num = 0;
+	put_str("\n");
+	while(num++ < 10){
+		put_int(*p++);
+		put_char(' ');
+	}
+
+
+	char* teststr = "\nfunction pointer\n";
+	void (* fp)(void) = welcome;
+	
+	fp();
+	put_hex(*fp); put_char('\n');put_hex(welcome); put_char('\n');
+
+	uint32_t n = 6;
+	uint32_t* nump = &n;
+	ASSERT(*nump == n);
+	ASSERT(nump == &n);
+	put_hex(*nump); put_char('\n');put_hex(&nump); put_char('\n');put_hex(&n);
 	//asm volatile ("sti");
 	// asm volatile ("int $0");
 	// asm volatile ("cli");

@@ -1,7 +1,6 @@
 #ifndef _KERNEL_GLOBAL_H
 #define _KERNEL_GLOBAL_H
 
-
 #define RPL0        0
 #define RPL1        1
 #define RPL2        2
