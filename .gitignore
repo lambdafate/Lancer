@@ -1,2 +1,4 @@
 bochsout.txt
 *.out
+.vscode/
+*.o
