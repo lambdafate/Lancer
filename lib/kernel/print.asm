@@ -91,13 +91,13 @@ _putchar_finish:
 
 ; print a str
 put_str:
-    push ds
+    ; push ds
     push eax
     push ebx
 
-    mov ax, DataSelector
-    mov ds, ax
-    mov ebx, [ss:esp+16]
+    ; mov ax, DataSelector
+    ; mov ds, ax
+    mov ebx, [ss:esp+12]
 _repchar:
     xor eax, eax
     mov al, [ds:ebx]
@@ -109,13 +109,16 @@ _repchar:
     add esp, 4                      ; call put_char here, you must deal with args on stack
               
     inc ebx
-    loop _repchar
+    jmp _repchar                    ; oh my God, fuck this line three thousand times
+                                    ; 'jmp _repchar' is currect, but i write 'loop _repchar' before
+                                    ; i found this bug(so that it will depend on 'ecx' for how many 
+                                    ; chars will be printed.)
+                                    ; fix this bug(or fault?): 2020/04/02 12:34
 
 _printstr_finish:
     pop ebx
     pop eax
-    pop ds
-
+    ; pop ds
     ret
 
 
