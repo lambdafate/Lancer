@@ -22,3 +22,7 @@ mouse: enabled=0
 
 # enable key mapping, using US layout as default
 keyboard: type=mf, serial_delay=200, paste_delay=100000
+
+cpu: count=1
+
+# gdbstub: enabled=1, port=1234, text_base=0, data_base=0, bss_base=0
