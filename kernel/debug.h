@@ -11,7 +11,7 @@
         }
 #else 
     #define ASSERT(condition)   \
-        (0)  
+        (0)
 
 #endif      // endif DEBUG
 
