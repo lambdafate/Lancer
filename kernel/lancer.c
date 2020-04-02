@@ -1,10 +1,9 @@
-#define DEBUG
-
+#include "stdint.h"
 #include "print.h"
 #include "init.h"
 #include "debug.h"
 #include "bitmap.h"
-#include "string.h"
+#include "malloc.h"
 
 typedef void (* func)(uint8_t*);
 
@@ -17,44 +16,65 @@ void welcome();
 int main(){
 
 	welcome();
-	hardware_init();
-	uint32_t memory = 1;
-	asm volatile ("movl 0xc0090000, %0": "=r"(memory));
-	put_int(memory/1024/1024);
-	put_char('\n');
-	uint32_t* pointer = 0xc0090000;
-	put_int((*pointer)/1024/1024);
 
-	BITMAP bitmap;
-	bitmap.size = 10;
-	bitmap.bits = 0x7c00;
+	// ASSERT(1 != 1);
+
+	hardware_init();
+
+	put_str("malloc(2): \n");
+	uint8_t* first = 0x7c00;
+	*first = 0xff;
+
+	void *p = malloc(2);
+	ASSERT(p == 0xa08000);
+	put_hex(p); put_char('\n');
+
+	p = malloc(1);
+	ASSERT(p == 0xa0a000);
+	put_hex(p); put_char('\n');
+
+	*first = 0xf2;
+	p= malloc(2);
+	ASSERT(p == 0xa02000);
+	put_hex(p); put_char('\n');
+
+	// uint32_t memory = 1;
+	// asm volatile ("movl 0xc0090000, %0": "=r"(memory));
+	// put_int(memory/1024/1024);
+	// put_char('\n');
+	// uint32_t* pointer = 0xc0090000;
+	// put_int((*pointer)/1024/1024);
+
+	// BITMAP bitmap;
+	// bitmap.size = 10;
+	// bitmap.bits = 0x7c00;
 	
-	memory_set(bitmap.bits, 10, 3);
 	// bitmap_init(&bitmap);
 
-	uint8_t* p = 0x7c00;
-	int num = 0;
-	put_str("\n");
-	while(num++ < 10){
-		put_int(*p++);
-		put_char(' ');
-	}
+	// uint8_t* p = 0x7c00;
+	// int num = 0;
+	// put_str("\n");
+	// while(num++ < 10){
+	// 	put_int(*p++);
+	// 	put_char(' ');
+	// }
 
 
-	char* teststr = "\nfunction pointer\n";
-	void (* fp)(void) = welcome;
+	// char* teststr = "\nfunction pointer\n";
+	// void (* fp)(void) = welcome;
 	
-	fp();
-	put_hex(*fp); put_char('\n');put_hex(welcome); put_char('\n');
+	// fp();
+	// put_hex(*fp); put_char('\n');put_hex(welcome); put_char('\n');
 
-	uint32_t n = 6;
-	uint32_t* nump = &n;
-	ASSERT(*nump == n);
-	ASSERT(nump == &n);
-	put_hex(*nump); put_char('\n');put_hex(&nump); put_char('\n');put_hex(&n);
-	//asm volatile ("sti");
-	// asm volatile ("int $0");
-	// asm volatile ("cli");
+	// uint32_t n = 6;
+	// uint32_t* nump = &n;
+	// ASSERT(*nump == n);
+	// ASSERT(nump == &n);
+	// put_hex(*nump); put_char('\n');put_hex(&nump); put_char('\n');put_hex(&n);
+	
+	asm volatile ("sti");
+	asm volatile ("int $0");
+	asm volatile ("cli");
 	
 	// ASSERT(1 != 1);
 	
