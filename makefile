@@ -13,7 +13,8 @@ NASMCompile	= nasm $(NASMARGS)
 
 LANCER_OBJECT	=  $(BUILDDIR)/lancer.o $(BUILDDIR)/interrupt_c.o \
 	$(BUILDDIR)/init.o $(BUILDDIR)/timer.o $(BUILDDIR)/debug.o $(BUILDDIR)/print.o \
-	$(BUILDDIR)/interrupt_asm.o $(BUILDDIR)/string.o $(BUILDDIR)/bitmap.o
+	$(BUILDDIR)/interrupt_asm.o $(BUILDDIR)/string.o $(BUILDDIR)/bitmap.o \
+	$(BUILDDIR)/malloc.o
 
 
 # BOOT and SETUP
@@ -30,12 +31,12 @@ $(BUILDDIR)/interrupt_c.o: ./kernel/interrupt.c
 	$(GCCCompile) -c $^ -o $@
 $(BUILDDIR)/init.o: ./kernel/init.c
 	$(GCCCompile) -c $^ -o $@
-
-
 $(BUILDDIR)/debug.o: ./kernel/debug.c
 	$(GCCCompile) -c $^ -o $@
 $(BUILDDIR)/interrupt_asm.o: ./kernel/interrupt.asm
 	$(NASMCompile) $^ -o $@
+$(BUILDDIR)/malloc.o: ./kernel/malloc.c
+	$(GCCCompile) -c $^ -o $@
 
 
 $(BUILDDIR)/string.o: ./lib/kernel/string.c
