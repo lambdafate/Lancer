@@ -24,6 +24,7 @@ interrupt_handler_entry%1:
     push fs
     pushad
 
+
     push %1
     call [interrupt_handler_table + %1*4]
     add esp, 4

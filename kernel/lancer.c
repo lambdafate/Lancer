@@ -1,9 +1,13 @@
 #include "stdint.h"
+#include "global.h"
 #include "print.h"
 #include "init.h"
 #include "debug.h"
 #include "bitmap.h"
 #include "malloc.h"
+#include "schedule.h"
+#include "string.h"
+
 
 typedef void (* func)(uint8_t*);
 
@@ -38,52 +42,20 @@ int main(){
 	ASSERT(p == 0xa02000);
 	put_hex(p); put_char('\n');
 
-	// uint32_t memory = 1;
-	// asm volatile ("movl 0xc0090000, %0": "=r"(memory));
-	// put_int(memory/1024/1024);
-	// put_char('\n');
-	// uint32_t* pointer = 0xc0090000;
-	// put_int((*pointer)/1024/1024);
-
-	// BITMAP bitmap;
-	// bitmap.size = 10;
-	// bitmap.bits = 0x7c00;
-	
-	// bitmap_init(&bitmap);
-
-	// uint8_t* p = 0x7c00;
-	// int num = 0;
-	// put_str("\n");
-	// while(num++ < 10){
-	// 	put_int(*p++);
-	// 	put_char(' ');
-	// }
-
-
-	// char* teststr = "\nfunction pointer\n";
-	// void (* fp)(void) = welcome;
-	
-	// fp();
-	// put_hex(*fp); put_char('\n');put_hex(welcome); put_char('\n');
-
-	// uint32_t n = 6;
-	// uint32_t* nump = &n;
-	// ASSERT(*nump == n);
-	// ASSERT(nump == &n);
-	// put_hex(*nump); put_char('\n');put_hex(&nump); put_char('\n');put_hex(&n);
+	PCB *t0 = (PCB*)0x00000000;
+	memory_set(t0, 4096, 0);
+	t0->ldt[0] = 0x00cf98000000ffff;
+	t0->ldt[1] = 0x00cf92000000ffff;
 	
 	asm volatile ("sti");
-	asm volatile ("int $0");
-	asm volatile ("cli");
 	
-	// ASSERT(1 != 1);
-	
-	//test_func_put_char();
-
-	//test_func_put_hex();
-	//test_func_put_int();
 	while(1){}
 }
+
+void _task0(){
+
+}
+
 
 void welcome(){
 	put_str("[/kernel/lancer       ]: ");
