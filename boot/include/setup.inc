@@ -21,3 +21,6 @@
     ScreenSelector  equ     0x10
     DataSelector    equ     0x18
     StackSelector   equ     0x20
+
+    TSSSelector     equ     0x28
+    LDTSelector     equ     0x30

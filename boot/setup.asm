@@ -144,6 +144,15 @@ _loopwrite:
     mov dword [ds:0x24], 0x00409600
 
 
+
+    mov dword [ds:0x28], 0x00000000         ; TSS
+    mov dword [ds:0x2c], 0x00000000         ; add TSS and LDT descriptors, for i will 
+                                            ; implement process
+    mov dword [ds:0x30], 0x00000000         ; data: 2020/04/05 16:00
+    mov dword [ds:0x34], 0x00000000         ; IDT
+
+
+
     ; load GDTR
     lgdt [cs:gdtinfo]   
 
@@ -204,10 +213,14 @@ flushpage:
 
     mov ax, ScreenSelector
     mov gs, ax
+    mov fs, ax
 
     call kernel_init            ; init kernel, prepare for leaving setup and jmping to kernel
     
     jmp eax     ; jmp to kernel, eax->e_entry
+
+
+
 
 
 reset_gdt:
@@ -308,7 +321,7 @@ _createother:
 
 ; gdt data
 gdtinfo:
-    dw  GDTlIMIT
+    dw  GDTlIMIT+16                                     ; +16 --> add tss and ldt
     dd  GDTBaseP
 
 stepinfo:
