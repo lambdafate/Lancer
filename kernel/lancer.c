@@ -17,6 +17,8 @@ void test_func_put_hex();
 void test_func_put_int();
 void welcome();
 
+void _task0();
+
 int main(){
 
 	welcome();
@@ -42,18 +44,63 @@ int main(){
 	ASSERT(p == 0xa02000);
 	put_hex(p); put_char('\n');
 
-	PCB *t0 = (PCB*)0x00000000;
+	PCB *t0 = (PCB*)0x00001000;
 	memory_set(t0, 4096, 0);
-	t0->ldt[0] = 0x00cf98000000ffff;
-	t0->ldt[1] = 0x00cf92000000ffff;
+	t0->ldt[0] = 0x00cff8000000ffff;	// code			7
+	t0->ldt[1] = 0x00cff2000000ffff;	// data			15
+	t0->ldt[2] = 0x0040f60000000000;	// stack 		23
+
+	void* gdts = (void*)GDTADDRESS;
+	uint32_t* gdt_ldt_des = gdts + LDT_SELECTOR;
+	*gdt_ldt_des++ = 0x10480017;
+	*gdt_ldt_des   = 0x00408200;
+
+	asm volatile("lldt %%ax": : "a"(LDT_SELECTOR));
 	
-	asm volatile ("sti");
+	TSS *ts0 = (TSS*)0x2000;
+	ts0->esp0 = (void*)t0 + 72;
+	ts0->ss0  = STACK_SELECTOR;
+
+	uint32_t* gdt_tss_des = gdts + TSS_SELECTOR;
+	*gdt_tss_des++ = 0x2000006b;
+	*gdt_tss_des   = 0x00408900;
+
+	asm volatile("ltr %%ax": :"a"(TSS_SELECTOR));
+
+	t0->stackframe.fs = 15;
+	t0->stackframe.gs = 15;
+	t0->stackframe.es = 15;
+	t0->stackframe.ds = 15;
+
+	t0->stackframe.ss =STACK_SELECTOR;
+	t0->stackframe.esp = 0x2000;
+	t0->stackframe.eflags = 0x0202;
+	t0->stackframe.cs = (7<<3) | 3;
+	t0->stackframe.eip = (void*)_task0;
+
+	put_str("\ni arrive here\n");
+	
+
+	asm volatile("cli;\
+				  movl $0x1020, %%esp;\
+				  popl %%fs;\
+				  popl %%gs;\
+			      popl %%es;\
+				  popl %%ds;\
+				  add $4, %%esp;\
+				  iret"::);
+
 	
 	while(1){}
 }
 
 void _task0(){
+	while(1){
+		put_str("task1 ");
+		for(int i=0; i<1000000; i++){
 
+		}
+	}
 }
 
 

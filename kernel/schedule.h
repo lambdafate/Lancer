@@ -3,7 +3,7 @@
 #include "stdint.h"
 
 #define PCB_NAME_SIZE       32
-#define PCB_LDT_SIZE        2
+#define PCB_LDT_SIZE        3
 #define PCB_MAX_NUM         2
 
 
@@ -29,15 +29,15 @@ typedef struct{
     uint32_t ldt;
     uint32_t trace_bitmap;
     uint32_t ssp;
-}TSS;
+}TSS;                                       // 27 * 4 = 108bytes
 
 
 typedef struct{
-    uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
+    uint32_t edi, esi, ebp, esp_, ebx, edx, ecx, eax;
     uint32_t fs, gs, es, ds;
     uint32_t error_code;
     uint32_t eip, cs, eflags, esp, ss;
-}StackFrame;
+}StackFrame;                                // 18 * 4 = 72bytes
 
 
 typedef struct{
@@ -45,17 +45,14 @@ typedef struct{
     uint64_t ldt[PCB_LDT_SIZE];
     uint32_t r3;
     uint8_t pid;
-    TASK_STATUS status;
+    uint8_t status;
     uint32_t time_counter;
     uint8_t priority;
     int8_t name[PCB_NAME_SIZE];
 }PCB;
 
 
-TSS tss;
-PCB task0;
-PCB tasks[PCB_MAX_NUM];
-PCB *current_task;
+
 
 void schedule_init();
 

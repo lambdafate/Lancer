@@ -40,7 +40,10 @@ static void _gernel_handler(uint8_t verctor){
     put_int(verctor);
     put_str(" -- ");
     put_str(interrupt_info[verctor]);
-    put_char('\n');
+    // put_char('\n');
+    for(int i=0; i<1000000; i++){
+
+	}
 }
 
 
@@ -59,7 +62,7 @@ static void init_pic(){
     outb(PIC_S_DATA, 0x01);
 
     // open master's IR0
-    outb(PIC_M_DATA, 0xfe);
+    outb(PIC_M_DATA, 0xff);
     outb(PIC_S_DATA, 0xff);
 }
 

@@ -26,8 +26,8 @@
 
 
 
-uint64_t* gdt = (uint64_t*)GDTADDRESS;
-uint32_t  gdt_limit = GDTLimit;
+// void* gdts = (void*)GDTADDRESS;
+// uint32_t  gdts_limit = GDTLimit;
 
 // void set_gdt_descriptor(uint32_t selecor, uint32_t base, uint32_t limit, );
 
