@@ -67,28 +67,58 @@ int main(){
 
 	asm volatile("ltr %%ax": :"a"(TSS_SELECTOR));
 
+	// t0->stackframe.fs = (8 << 3) | 3;
+	// t0->stackframe.gs = (8 << 3) | 3;
+	// t0->stackframe.es = (8 << 3) | 3;
+	// t0->stackframe.ds = (8 << 3) | 3;
+
+	// t0->stackframe.ss = (9 << 3) | 3;
+	// t0->stackframe.esp = 0x2000;
+	// t0->stackframe.eflags = 0x0202;
+	// t0->stackframe.cs = (7 << 3) | 3;
+	// t0->stackframe.eip = (void*)_task0;
+
+
 	t0->stackframe.fs = 15;
 	t0->stackframe.gs = 15;
 	t0->stackframe.es = 15;
 	t0->stackframe.ds = 15;
-
-	t0->stackframe.ss =STACK_SELECTOR;
+	t0->stackframe.ss = 23;
 	t0->stackframe.esp = 0x2000;
 	t0->stackframe.eflags = 0x0202;
-	t0->stackframe.cs = (7<<3) | 3;
+	t0->stackframe.cs = 7;
 	t0->stackframe.eip = (void*)_task0;
 
 	put_str("\ni arrive here\n");
-	
+
 
 	asm volatile("cli;\
-				  movl $0x1020, %%esp;\
-				  popl %%fs;\
-				  popl %%gs;\
-			      popl %%es;\
-				  popl %%ds;\
-				  add $4, %%esp;\
-				  iret"::);
+				movl $0x1020, %%esp;\
+				popl %%fs;\
+				popl %%gs;\
+				popl %%es;\
+				popl %%ds;\
+				add $4, %%esp;\
+				iret"::);
+
+
+
+	// asm volatile("cli;\
+	// 			  movl $67, %%eax;\
+	// 			  movl %%eax, %%fs;\
+	// 			  movl %%eax, %%gs;\
+	// 		      movl %%eax, %%es;\
+	// 			  movl %%eax, %%ds;\
+	// 			  pushl $75;\ 
+	// 			  pushl $0x2000;\
+	// 			  pushf;\
+	// 			  popl %%eax;\
+	// 			  or $0x200, %%eax;\
+	// 			  and $0xffffbfff, %%eax;\
+	// 			  pushl %%eax;\
+	// 			  pushl $59;\
+	// 			  pushl %0;\
+	// 			  iret"::"g"(_task0));
 
 	
 	while(1){}
@@ -96,7 +126,7 @@ int main(){
 
 void _task0(){
 	while(1){
-		put_str("task1 ");
+		asm volatile("movb $0x54, 0xb8000");
 		for(int i=0; i<1000000; i++){
 
 		}

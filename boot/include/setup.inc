@@ -7,7 +7,7 @@
     HardwareBase    equ     0x9000      ; load the hardware info to there
     HardwareOffset  equ     0x0000
 
-    GDTlIMIT        equ     39
+    GDTlIMIT        equ     79
     GDTBaseR        equ     0x8000      ; it's base addr in real mode
     GDTBaseP        equ     0x00080000  ; gdtr need the physical addr
 
