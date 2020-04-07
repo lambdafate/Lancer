@@ -24,7 +24,6 @@ typedef struct{
 
 typedef struct{
     StackFrame stackframe;
-    uint64_t ldt[PCB_LDT_SIZE];
     uint32_t r3;
     uint8_t pid;
     uint8_t status;
@@ -33,8 +32,7 @@ typedef struct{
     int8_t name[PCB_NAME_SIZE];
 }PCB;
 
-
-
+extern uint32_t *current;
 
 void schedule_init();
 

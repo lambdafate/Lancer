@@ -5,11 +5,29 @@
 #include "interrupt.h"
 
 
+// sizeod(void*) = 4(in 32 cpu), so there can use void* or uint32_t
+extern void* interrupt_handler_entrys[IDT_NUM];     // handler entry table defined in interrupt.asm
+void* interrupt_handler_table[IDT_NUM];             // entrys[i] will call table[i]
+char* interrupt_info[IDT_NUM];                      // recard each interrupt info
+gate_descriptor idt[IDT_NUM];                       // interrupt descriptor table
+
+
 static void init_pic();
 static void init_gate_descriptor();
 static void make_gate_descriptor(gate_descriptor* gate, uint8_t attribute, void* handler);
 static void init_hander_table();
 static void _gernel_handler(uint8_t verctor);
+
+
+void handler_clock(uint8_t vector){
+    // put_str("clock!    ");
+    
+}
+
+void handler_syscall(uint8_t vector){
+    put_char('s');
+}
+
 
 
 // init interrupt descriptor table
@@ -24,12 +42,16 @@ void idt_init(){
     put_str("\nidt_init-> lidt done...\n");
 }
 
+
 static void init_hander_table(){
-    for (uint32_t i = 0; i < IDT_NUM; i++){
+    for (uint32_t i = 0; i < 32; i++){
         interrupt_handler_table[i] = _gernel_handler;
         interrupt_info[i] = "unknown";
     }
+    interrupt_handler_table[32] = handler_clock;
+    interrupt_handler_table[33] = handler_syscall;
 }
+
 
 // gernel interrupt handler
 static void _gernel_handler(uint8_t verctor){
@@ -62,16 +84,20 @@ static void init_pic(){
     outb(PIC_S_DATA, 0x01);
 
     // open master's IR0
-    outb(PIC_M_DATA, 0xff);
+    outb(PIC_M_DATA, 0xfe);
     outb(PIC_S_DATA, 0xff);
 }
 
+
 // init idt[] according to interrupt_hander_table
 static void init_gate_descriptor(){
-    for (int32_t i = 0; i < IDT_NUM; i++){
+    for (int32_t i = 0; i < 33; i++){
         make_gate_descriptor(&idt[i], IDT_ATTRIBUTE_DPL0, interrupt_handler_entrys[i]);
     }
+    // init 33
+    make_gate_descriptor(&idt[33], IDT_ATTRIBUTE_DPL3, interrupt_handler_entrys[33]);
 }
+
 
 static void make_gate_descriptor(gate_descriptor* gate, uint8_t attribute, void* handler){
     gate->handler_low = ((uint32_t)handler & 0x0000ffff);
@@ -80,3 +106,5 @@ static void make_gate_descriptor(gate_descriptor* gate, uint8_t attribute, void*
     gate->attribute = attribute;
     gate->handler_high = ((uint32_t)handler & 0xffff0000) >> 16 ;
 }
+
+

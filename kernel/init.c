@@ -2,7 +2,7 @@
 #include "timer.h"
 #include "malloc.h"
 
-void hardware_init(){
+void lancer_init(){
     idt_init();
     timer_init();
 

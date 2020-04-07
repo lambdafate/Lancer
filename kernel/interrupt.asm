@@ -5,6 +5,7 @@
 %define ERROR_CODE  nop
 %define ZERO        push 0
 
+extern current
 extern interrupt_handler_table
 global interrupt_handler_entrys
 
@@ -24,10 +25,11 @@ interrupt_handler_entry%1:
     push fs
     pushad
 
-
+    mov esp, 0x80000
     push %1
     call [interrupt_handler_table + %1*4]
     add esp, 4
+    mov esp, 0x1000
 
     mov al, 0x20
     out 0xa0, al
@@ -81,4 +83,7 @@ VECTOR 0x1c,ZERO
 VECTOR 0x1d,ERROR_CODE
 VECTOR 0x1e,ERROR_CODE
 VECTOR 0x1f,ZERO 
+
+
 VECTOR 0x20,ZERO
+VECTOR 0x21,ZERO

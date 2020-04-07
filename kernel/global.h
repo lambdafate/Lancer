@@ -1,5 +1,7 @@
 #ifndef _KERNEL_GLOBAL_H
 #define _KERNEL_GLOBAL_H
+#include "stdint.h"
+
 
 #define RPL0        0
 #define RPL1        1
@@ -50,10 +52,6 @@ typedef struct{
     uint32_t base_high :  8;
 }__attribute((packed)) global_descriptor;
 
-global_descriptor *gdt = (global_descriptor*)(GDT_ADDRESS);
-
-
-
 typedef struct{
     uint32_t backlink;
     uint32_t esp0, ss0;
@@ -73,5 +71,10 @@ typedef struct{
 
 #define TSS_ADDRESS                          0x8f000
 #define TSS_LIMIT                            (sizeof(TSS)-1)
+
+
+void write_tss(uint32_t esp0);
+void set_tss();
+void flush_tss();
 
 #endif
