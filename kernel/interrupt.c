@@ -75,7 +75,7 @@ static void init_gate_descriptor(){
 
 static void make_gate_descriptor(gate_descriptor* gate, uint8_t attribute, void* handler){
     gate->handler_low = ((uint32_t)handler & 0x0000ffff);
-    gate->selector = CODE_SELECTOR;
+    gate->selector = GDT_SELECTOR_KERNEL_CODE;
     gate->constant = 0;
     gate->attribute = attribute;
     gate->handler_high = ((uint32_t)handler & 0xffff0000) >> 16 ;
