@@ -144,21 +144,19 @@ _loopwrite:
     mov dword [ds:0x24], 0x00409600
 
 
-
+    ; add below seg descriptor, main for task switch and user task
+    ; data: 2020/04/07 21:47
     mov dword [ds:0x28], 0x00000000         ; TSS
-    mov dword [ds:0x2c], 0x00000000         ; add TSS and LDT descriptors, for i will 
-                                            ; implement process
-    mov dword [ds:0x30], 0x00000000         ; data: 2020/04/05 16:00
-    mov dword [ds:0x34], 0x00000000         ; LDT
+    mov dword [ds:0x2c], 0x00000000         
+    
+    mov dword [ds:0x30], 0x0000ffff         ; user code seg 
+    mov dword [ds:0x34], 0x00cff800
 
-    mov dword [ds:0x38], 0x0000ffff         ; user code seg 7
-    mov dword [ds:0x3c], 0x00cff800
+    mov dword [ds:0x38], 0x0000ffff         ; user data seg 
+    mov dword [ds:0x3c], 0x00cff200
 
-    mov dword [ds:0x40], 0x0000ffff         ; user data seg 8
-    mov dword [ds:0x44], 0x00cff200
-
-    mov dword [ds:0x48], 0x00000000         ; user stack seg 9
-    mov dword [ds:0x4c], 0x0040f600
+    mov dword [ds:0x40], 0x00000000         ; user stack seg 
+    mov dword [ds:0x44], 0x0040f600
 
 
     ; load GDTR
@@ -329,7 +327,7 @@ _createother:
 
 ; gdt data
 gdtinfo:
-    dw  GDTlIMIT                                       ; +16 --> add tss and ldt
+    dw  GDTlIMIT                                     
     dd  GDTBaseP
 
 stepinfo:
