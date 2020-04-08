@@ -5,7 +5,7 @@
 %define ERROR_CODE  nop
 %define ZERO        push 0
 
-extern current
+extern current_task
 extern interrupt_handler_table
 global interrupt_handler_entrys
 
@@ -29,7 +29,7 @@ interrupt_handler_entry%1:
     push %1
     call [interrupt_handler_table + %1*4]
     add esp, 4
-    mov esp, 0x1000
+    mov esp, [current_task]
 
     mov al, 0x20
     out 0xa0, al
