@@ -4,6 +4,7 @@
 #include "print.h"
 #include "interrupt.h"
 
+uint8_t clock_flag  = 0;
 
 // sizeod(void*) = 4(in 32 cpu), so there can use void* or uint32_t
 extern void* interrupt_handler_entrys[IDT_NUM];     // handler entry table defined in interrupt.asm
@@ -20,8 +21,12 @@ static void _gernel_handler(uint8_t verctor);
 
 
 void handler_clock(uint8_t vector){
-    // put_str("clock!    ");
-    
+    if(clock_flag != 0){
+        return;
+    }
+    clock_flag++;
+    put_str("\nclock interrupt\n");
+    clock_flag--;
 }
 
 void handler_syscall(uint8_t vector){

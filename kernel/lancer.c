@@ -9,13 +9,14 @@ void _task0();
 
 int main(){
 
+	asm volatile("cli");
+	
 	PCB *t0 = (PCB*)0x00001000;
 	current = (void*)t0;
 	memory_set(t0, 4096, 0);
 
 	welcome();
 	lancer_init();
-
 
 	t0->stackframe.fs = GDT_SELECTOR_USER_DATA;
 	t0->stackframe.gs = GDT_SELECTOR_USER_DATA;
@@ -65,7 +66,7 @@ int main(){
 void _task0(){
 	while(1){
 		asm volatile("int $0x21");
-		for(int i=0; i<1000000; i++){
+		for(int i=0; i<100; i++){
 
 		}
 	}

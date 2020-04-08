@@ -24,7 +24,7 @@ interrupt_handler_entry%1:
     push gs
     push fs
     pushad
-
+    
     mov esp, 0x80000
     push %1
     call [interrupt_handler_table + %1*4]
@@ -34,6 +34,8 @@ interrupt_handler_entry%1:
     mov al, 0x20
     out 0xa0, al
     out 0x20, al
+
+    ; sti;
 
     popad   
     pop fs

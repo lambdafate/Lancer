@@ -11,9 +11,10 @@ typedef unsigned short int uint16_t;
 typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
 
-#define bool    uint8_t
-#define true    1
-#define false   0
+// typedef unsigned char bool_t;
+
+// #define true    1
+// #define false   0
 
 #define NULL    ((void*)0)
 
