@@ -6,6 +6,18 @@
 
 void welcome();
 
+void task1(){
+	while(1){
+		
+		for(int i=0; i<100; i++){
+
+		}
+	}
+}
+
+
+
+
 int main(){
 
 	asm volatile("cli");
@@ -15,24 +27,6 @@ int main(){
 	
 	switch_to_user_mode();
 
-	// asm volatile("cli;\
-	// 			  movl $67, %%eax;\
-	// 			  movl %%eax, %%fs;\
-	// 			  movl %%eax, %%gs;\
-	// 		      movl %%eax, %%es;\
-	// 			  movl %%eax, %%ds;\
-	// 			  pushl $75;\ 
-	// 			  pushl $0x2000;\
-	// 			  pushf;\
-	// 			  popl %%eax;\
-	// 			  or $0x200, %%eax;\
-	// 			  and $0xffffbfff, %%eax;\
-	// 			  pushl %%eax;\
-	// 			  pushl $59;\
-	// 			  pushl %0;\
-	// 			  iret"::"g"(_task0));
-
-	
 	while(1){}
 }
 

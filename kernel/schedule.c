@@ -4,8 +4,10 @@
 #include "debug.h"
 
 void _task0();
+void _task1();
 void init_tasks();
 void init_stackframe_with_user_mode(STACKFRAME *stackframe, void *eip, void *esp);
+void run_new_task(uint8_t *task_name, void *func);
 
 TASK *current_task;
 TASK *task_head_ready;
@@ -21,10 +23,29 @@ void schedule_init(){
 
     set_tss();							// set tss segment descriptor in gdt
 	flush_tss();						// load tss descriptor to tr.
+
+	run_new_task("task1", _task1);
 }
 
 void run_new_task(uint8_t *task_name, void *func){
-	
+	TASK *temp = 0;
+	for (uint32_t i = 0; i < TASK_MAX_NUM; i++){
+		if(tasks[i].status == TASK_DIED){
+			temp = &tasks[i];
+			break;
+		}
+	}
+	if(temp == 0){
+		return;
+	}
+	ASSERT(temp == tasks);
+
+	temp->status = TASK_READY;
+	init_stackframe_with_user_mode(&temp->stackframe, func, 0x1000);
+	// set task name
+
+	// change current_task
+	current_task =temp;
 }
 
 void switch_to_user_mode(){
@@ -79,12 +100,21 @@ void init_stackframe_with_user_mode(STACKFRAME *stackframe, void *eip, void *esp
 	stackframe->eip = eip;
 }
 
-
+uint8_t *info1 = "task0...";
 
 void _task0(){
 	while(1){
-		asm volatile("int $0x21");
-		for(int i=0; i<100; i++){
+		asm volatile("movl %0, %%eax; int $0x21"::"m"(info1));
+		for(int i=0; i<1000000; i++){
+
+		}
+	}
+}
+
+void _task1(){
+	while(1){
+		asm volatile("movl $0x04, 0xb8001");
+		for(int i=0; i<1000000; i++){
 
 		}
 	}

@@ -36,6 +36,7 @@ typedef struct _task{
 
 extern TASK *current_task;
 extern TASK *task_head_ready;
+TASK  tasks[TASK_MAX_NUM];
 void schedule_init();
 void switch_to_user_mode();
 

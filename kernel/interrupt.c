@@ -3,6 +3,7 @@
 #include "io.h"
 #include "print.h"
 #include "interrupt.h"
+#include "schedule.h"
 
 uint8_t clock_flag  = 0;
 
@@ -21,16 +22,32 @@ static void _gernel_handler(uint8_t verctor);
 
 
 void handler_clock(uint8_t vector){
-    if(clock_flag != 0){
+    TASK *temp = 0;
+    uint32_t i;
+    for (i = 0; i < TASK_MAX_NUM; i++){
+        if(tasks[i].status == TASK_READY){
+            temp = &tasks[i];
+            break;   
+        }
+    }
+    if(temp == 0){
         return;
     }
-    clock_flag++;
-    put_str("\nclock interrupt\n");
-    clock_flag--;
+    current_task->status = TASK_BLOCKED;
+    temp->status = TASK_RUNNING;
+    current_task = temp;
+
+    current_task = tasks;
+    put_str("\nclock interrupt  ");
+    put_int(i);
+    put_char('\n');
+    
 }
 
 void handler_syscall(uint8_t vector){
-    put_char('s');
+    uint8_t *info="task0 syscall default\n";
+    // asm volatile("movl %%eax, %0":"=m"(info):);
+    put_str(info);
 }
 
 
