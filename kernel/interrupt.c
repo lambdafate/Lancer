@@ -6,6 +6,8 @@
 #include "schedule.h"
 #include "debug.h"
 
+uint32_t clock_tiks = 0;
+
 uint8_t clock_flag  = 0;
 int32_t syscall_number = -1;
 void *syscall_arg1 = NULL;
@@ -28,7 +30,10 @@ static void handler_cpu_inside(uint8_t verctor);
 
 
 void handler_clock(){
-
+    clock_tiks++;
+    put_str("clock-interrupt:    ");
+    put_int(clock_tiks);
+    put_char('\n');
     schedule();
 
     // TASK *temp = 0;
@@ -52,14 +57,14 @@ void handler_clock(){
 }
 
 void handler_syscall(){
-    uint32_t *info = NULL;
-    asm volatile("":"=a"(info):);
+    // uint32_t *info = NULL;
+    // asm volatile("":"=a"(info):);
     
-    put_str(current_task->name);
-    put_str("    ");
-    put_str(info);
-    put_str("\n");    
-    asm volatile(""::"a"(1));
+    // put_str(current_task->name);
+    // put_str("    ");
+    // put_str(info);
+    // put_str("\n");    
+    // asm volatile(""::"a"(1));
 }
 
 
