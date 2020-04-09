@@ -1,4 +1,5 @@
 #include "io.h"
+#include "stdint.h"
 
 #define PIT_CTRT_PORT       0x43
 #define PIT_DATA_PORT       0x40
@@ -9,8 +10,14 @@
 
 // PIT: programmable interval timer
 // set PIT
-void timer_init(){
+void timer_init(uint32_t frequency){
     outb(PIT_CTRT_PORT, (uint8_t)PIT_CTRL_TIMER0);
-    outb(PIT_DATA_PORT, (uint8_t)PIT_TIMER0_LOW);
-    outb(PIT_DATA_PORT, (uint8_t)PIT_TIMER0_HIGH);
+
+    uint32_t divisor = 1193180 / frequency;
+    // Divisor has to be sent byte-wise, so split here into upper/lower bytes.
+    uint8_t l = (uint8_t)(divisor & 0xFF);
+    uint8_t h = (uint8_t)( (divisor>>8) & 0xFF );
+
+    outb(PIT_DATA_PORT, l);
+    outb(PIT_DATA_PORT, h);
 }
