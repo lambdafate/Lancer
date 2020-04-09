@@ -238,7 +238,16 @@ reset_gdt:
 
     add dword [ds:ebx+0x14], 0xc0000000     ; screen seg, base+0xc0000000
 
-    add dword [ds:ebx+0x24], 0xc0000000     ; stack seg, base+0xc0000000
+    ; add dword [ds:ebx+0x24], 0xc0000000     ; stack seg, base+0xc0000000
+
+    ; note: when we linked all the *.o file to make Image after compile all files,
+    ; we use 'ld -Ttext 0xc0010000', this will load kernel from 0xc0010000(virtual address),
+    ; 0xc0010000~0xffffffff <=> kernel space, all the address of virables used in kernel, 
+    ; are malloced above 0xc0010000. note this because it maybe woring if you set segment's
+    ; base address like 0xc0000000.
+    ; fix this bug because task switch always failed.
+    ; data: 2020/04/09 10:02
+    
     pop ebx
     ret
 
