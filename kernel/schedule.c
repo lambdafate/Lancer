@@ -1,13 +1,13 @@
 #include "stdint.h"
 #include "schedule.h"
 #include "global.h"
+#include "string.h"
 #include "debug.h"
 
-void _task0();
-void _task1();
 void init_tasks();
 void init_stackframe_with_user_mode(STACKFRAME *stackframe, void *eip, void *esp);
 void run_new_task(uint8_t *task_name, void *func);
+
 
 TASK *current_task;
 TASK *task_head_ready;
@@ -23,9 +23,37 @@ void schedule_init(){
 
     set_tss();							// set tss segment descriptor in gdt
 	flush_tss();						// load tss descriptor to tr.
-
-	run_new_task("task1", _task1);
 }
+
+void schedule(){
+    TASK *temp = 0;
+    uint32_t i = (current_task-tasks);
+    for (; i < TASK_MAX_NUM; i = (i+1)%TASK_MAX_NUM){
+        if(tasks[i].status == TASK_READY){
+            temp = &tasks[i];
+            break;   
+        }
+    }
+	
+    if(temp == 0){
+        return;
+    }
+    switch_to(current_task, temp);
+}
+
+
+void switch_to(TASK *curr_task, TASK *new_task){
+	curr_task->status = TASK_READY;
+	new_task->status  = TASK_RUNNING;
+	// maybe switch r3
+
+	current_task = new_task;
+	
+	// we must change tss's esp0 to current_task's stackframe when happen task switch. 
+    write_tss((uint32_t)current_task + sizeof(STACKFRAME));
+}
+
+
 
 void run_new_task(uint8_t *task_name, void *func){
 	TASK *temp = 0;
@@ -38,31 +66,38 @@ void run_new_task(uint8_t *task_name, void *func){
 	if(temp == 0){
 		return;
 	}
-	ASSERT(temp == tasks);
 
 	temp->status = TASK_READY;
 	init_stackframe_with_user_mode(&temp->stackframe, func, 0x1000);
 	// set task name
-
+	strcpy(temp->name, task_name);
 	// change current_task
 	current_task =temp;
 }
 
 void switch_to_user_mode(){
-    TASK *t0 = (TASK*)0x00001000;
-	current_task = t0;
+	ASSERT(current_task != NULL);
+	// ASSERT(current_task == tasks);
 
-	memory_set(t0, 4096, 0);
-	init_stackframe_with_user_mode(&t0->stackframe, _task0, (void*)t0+0x1000);
-	write_tss((uint32_t)(t0)+sizeof(STACKFRAME));
+	// TASK *t0 = (TASK*)0x00001000;
+
+	// current_task = t0;
+
+	// memory_set(t0, 4096, 0);
+	// init_stackframe_with_user_mode(&t0->stackframe, _task0, (void*)t0+0x1000);
+
+	// write_tss((uint32_t)(t0)+sizeof(STACKFRAME));
+	current_task->status = TASK_RUNNING;
+	write_tss((uint32_t)current_task + sizeof(STACKFRAME));
+	uint32_t _position = (uint32_t)current_task + 0x20;
 	asm volatile("cli;\
-				movl $0x1020, %%esp;\
+				movl %0, %%esp;\
 				popl %%fs;\
 				popl %%gs;\
 				popl %%es;\
 				popl %%ds;\
 				add $4, %%esp;\
-				iret"::);
+				iret"::"a"(_position));
 }
 
 
@@ -76,9 +111,7 @@ void init_tasks(){
 		tasks[i].priority = TASK_PRIORITY;
 		tasks[i].r3		= 0;
 		tasks[i].next	= 0;
-		for (uint8_t j = 0; *init_name; j++){
-			tasks[i].name[j] = *init_name++;
-		}
+		strcpy(tasks[i].name, init_name);
 	}
 }
 
@@ -98,24 +131,4 @@ void init_stackframe_with_user_mode(STACKFRAME *stackframe, void *eip, void *esp
 	stackframe->eflags = 0x0202;
 	stackframe->cs = GDT_SELECTOR_USER_CODE;
 	stackframe->eip = eip;
-}
-
-uint8_t *info1 = "task0...";
-
-void _task0(){
-	while(1){
-		asm volatile("movl %0, %%eax; int $0x21"::"m"(info1));
-		for(int i=0; i<1000000; i++){
-
-		}
-	}
-}
-
-void _task1(){
-	while(1){
-		asm volatile("movl $0x04, 0xb8001");
-		for(int i=0; i<1000000; i++){
-
-		}
-	}
 }

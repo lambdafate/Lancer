@@ -22,32 +22,41 @@ static void _gernel_handler(uint8_t verctor);
 
 
 void handler_clock(uint8_t vector){
-    TASK *temp = 0;
-    uint32_t i;
-    for (i = 0; i < TASK_MAX_NUM; i++){
-        if(tasks[i].status == TASK_READY){
-            temp = &tasks[i];
-            break;   
-        }
-    }
-    if(temp == 0){
-        return;
-    }
-    current_task->status = TASK_BLOCKED;
-    temp->status = TASK_RUNNING;
-    current_task = temp;
 
-    current_task = tasks;
-    put_str("\nclock interrupt  ");
-    put_int(i);
-    put_char('\n');
-    
+    schedule();
+
+    // TASK *temp = 0;
+    // uint32_t i;
+    // for (i = 0; i < TASK_MAX_NUM; i++){
+    //     if(tasks[i].status == TASK_READY){
+    //         temp = &tasks[i];
+    //         break;   
+    //     }
+    // }
+    // if(temp == 0){
+    //     return;
+    // }
+    // current_task->status = TASK_READY;
+    // temp->status = TASK_RUNNING;
+    // current_task = temp;
+
+
+    // // we must change tss's esp0 to current_task's stackframe when happen task switch. 
+    // write_tss((uint32_t)current_task + sizeof(STACKFRAME));
 }
 
 void handler_syscall(uint8_t vector){
-    uint8_t *info="task0 syscall default\n";
-    // asm volatile("movl %%eax, %0":"=m"(info):);
-    put_str(info);
+
+    put_str(current_task->name);
+    put_str("       \n");
+    // uint8_t *info=" task0 ";
+    // // asm volatile("movl %%eax, %0":"=m"(info):);
+    // put_str(info);
+    // for (uint32_t i = 0; i < 1000000; i++)
+    // {
+    //     /* code */
+    // }
+    
 }
 
 

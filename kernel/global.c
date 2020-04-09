@@ -5,7 +5,7 @@
 TSS *tss = (TSS*)(TSS_ADDRESS);
 global_descriptor *gdt = (global_descriptor*)(GDT_ADDRESS);
 
-// set bss's ss0 and esp0
+// set tss's ss0 and esp0
 void write_tss(uint32_t esp0){
     tss->ss0  = GDT_SELECTOR_KERNEL_STACK;
     tss->esp0 = esp0;

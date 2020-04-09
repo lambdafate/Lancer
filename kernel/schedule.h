@@ -39,5 +39,6 @@ extern TASK *task_head_ready;
 TASK  tasks[TASK_MAX_NUM];
 void schedule_init();
 void switch_to_user_mode();
-
+void schedule();
+void switch_to(TASK *curr_task, TASK *new_task);
 #endif
