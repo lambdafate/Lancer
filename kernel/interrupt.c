@@ -4,8 +4,14 @@
 #include "print.h"
 #include "interrupt.h"
 #include "schedule.h"
+#include "debug.h"
 
 uint8_t clock_flag  = 0;
+int32_t syscall_number = -1;
+void *syscall_arg1 = NULL;
+void *syscall_arg2 = NULL;
+void *syscall_arg3 = NULL;
+
 
 // sizeod(void*) = 4(in 32 cpu), so there can use void* or uint32_t
 extern void* interrupt_handler_entrys[IDT_NUM];     // handler entry table defined in interrupt.asm
@@ -18,10 +24,10 @@ static void init_pic();
 static void init_gate_descriptor();
 static void make_gate_descriptor(gate_descriptor* gate, uint8_t attribute, void* handler);
 static void init_hander_table();
-static void _gernel_handler(uint8_t verctor);
+static void handler_cpu_inside(uint8_t verctor);
 
 
-void handler_clock(uint8_t vector){
+void handler_clock(){
 
     schedule();
 
@@ -45,20 +51,16 @@ void handler_clock(uint8_t vector){
     // write_tss((uint32_t)current_task + sizeof(STACKFRAME));
 }
 
-void handler_syscall(uint8_t vector){
-
-    put_str(current_task->name);
-    put_str("       \n");
-    // uint8_t *info=" task0 ";
-    // // asm volatile("movl %%eax, %0":"=m"(info):);
-    // put_str(info);
-    // for (uint32_t i = 0; i < 1000000; i++)
-    // {
-    //     /* code */
-    // }
+void handler_syscall(){
+    uint32_t *info = NULL;
+    asm volatile("":"=a"(info):);
     
+    put_str(current_task->name);
+    put_str("    ");
+    put_str(info);
+    put_str("\n");    
+    asm volatile(""::"a"(1));
 }
-
 
 
 // init interrupt descriptor table
@@ -76,16 +78,18 @@ void idt_init(){
 
 static void init_hander_table(){
     for (uint32_t i = 0; i < 32; i++){
-        interrupt_handler_table[i] = _gernel_handler;
+        interrupt_handler_table[i] = handler_cpu_inside;
         interrupt_info[i] = "unknown";
     }
+    // clock interrupt
     interrupt_handler_table[32] = handler_clock;
+    // a template syscall.
     interrupt_handler_table[33] = handler_syscall;
 }
 
 
 // gernel interrupt handler
-static void _gernel_handler(uint8_t verctor){
+static void handler_cpu_inside(uint8_t verctor){
     if(verctor == 0x27 || verctor == 0x2f){
         return;
     }
@@ -99,6 +103,19 @@ static void _gernel_handler(uint8_t verctor){
 	}
 }
 
+
+// init idt[] according to interrupt_hander_table
+static void init_gate_descriptor(){
+    // init cpu inside interrupt
+    for (int32_t i = 0; i < 32; i++){
+        make_gate_descriptor(&idt[i], IDT_ATTRIBUTE_DPL0, interrupt_handler_entrys[i]);
+    }
+    // init clock interrupt
+    make_gate_descriptor(&idt[32], IDT_ATTRIBUTE_DPL0, interrupt_handler_entrys[32]);
+
+    // init 33
+    make_gate_descriptor(&idt[33], IDT_ATTRIBUTE_DPL3, interrupt_handler_entrys[33]);
+}
 
 // init intel 8259A
 static void init_pic(){
@@ -120,14 +137,7 @@ static void init_pic(){
 }
 
 
-// init idt[] according to interrupt_hander_table
-static void init_gate_descriptor(){
-    for (int32_t i = 0; i < 33; i++){
-        make_gate_descriptor(&idt[i], IDT_ATTRIBUTE_DPL0, interrupt_handler_entrys[i]);
-    }
-    // init 33
-    make_gate_descriptor(&idt[33], IDT_ATTRIBUTE_DPL3, interrupt_handler_entrys[33]);
-}
+
 
 
 static void make_gate_descriptor(gate_descriptor* gate, uint8_t attribute, void* handler){

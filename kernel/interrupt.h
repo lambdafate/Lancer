@@ -2,7 +2,7 @@
 #define _KERNEL_INTERRUPT_H
 #include "stdint.h"
 
-#define IDT_NUM     250
+#define IDT_NUM     256
 #define PIC_M_CTRL  0x20        // intel 8259A interrupt
 #define PIC_M_DATA  0x21        
 #define PIC_S_CTRL  0xa0

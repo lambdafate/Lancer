@@ -52,7 +52,45 @@ section .data
 
 
 
+%macro VECTOR_NOARGS 2
+section .text
+interrupt_handler_entry%1:
+    %2
 
+    push ds
+    push es
+    push gs
+    push fs
+    pushad
+    
+    mov esp, 0x80000
+    ; push %1
+    call [interrupt_handler_table + %1*4]
+    ; add esp, 4
+    mov esp, [current_task]
+
+    mov al, 0x20
+    out 0xa0, al
+    out 0x20, al
+
+    ; sti;
+
+    popad   
+    pop fs
+    pop gs
+    pop es
+    pop ds
+
+    add esp, 4
+    iret
+section .data
+    dd interrupt_handler_entry%1
+
+%endmacro
+
+
+
+; CPU inside interrupt
 VECTOR 0x00,ZERO
 VECTOR 0x01,ZERO
 VECTOR 0x02,ZERO
@@ -86,6 +124,6 @@ VECTOR 0x1d,ERROR_CODE
 VECTOR 0x1e,ERROR_CODE
 VECTOR 0x1f,ZERO 
 
-
-VECTOR 0x20,ZERO
-VECTOR 0x21,ZERO
+; user defined interrupt
+VECTOR_NOARGS 0x20,ZERO
+VECTOR_NOARGS 0x21,ZERO
