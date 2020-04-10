@@ -8,6 +8,7 @@
 #define PIT_TIMER0_LOW      0x0               // it will send clock interrupt in 54.925ms 
 #define PIT_TIMER0_HIGH     0x0               // if PIT_TIMER0=0(65535)
 
+
 // PIT: programmable interval timer
 // set PIT
 void timer_init(uint32_t frequency){
