@@ -4,7 +4,7 @@
 
 #define PCB_NAME_SIZE                   32
 #define TASK_MAX_NUM                    30
-#define TASK_TIMECOUNTER                 3
+#define TASK_TICKS                       3
 #define TASK_PRIORITY                    3
 
 
@@ -27,8 +27,9 @@ typedef struct _task{
     STACKFRAME stackframe;
     int32_t pid;
     uint8_t status;
-    uint32_t time_counter;
-    uint8_t priority;
+    int32_t ticks;
+    int32_t priority;
+    uint32_t run_ticks;
     uint32_t r3;
     int8_t name[PCB_NAME_SIZE];
     struct _task *next;

@@ -6,7 +6,7 @@
 #include "schedule.h"
 #include "debug.h"
 
-uint32_t clock_tiks = 0;
+uint32_t clock_ticks = 0;
 
 uint8_t clock_flag  = 0;
 int32_t syscall_number = -1;
@@ -30,41 +30,41 @@ static void handler_cpu_inside(uint8_t verctor);
 
 
 void handler_clock(){
-    clock_tiks++;
-    put_str("clock-interrupt:    ");
-    put_int(clock_tiks);
-    put_char('\n');
-    schedule();
+    // put_str("handler-clock----\n");
+    clock_ticks++;
 
-    // TASK *temp = 0;
-    // uint32_t i;
-    // for (i = 0; i < TASK_MAX_NUM; i++){
-    //     if(tasks[i].status == TASK_READY){
-    //         temp = &tasks[i];
-    //         break;   
-    //     }
-    // }
-    // if(temp == 0){
+    current_task->run_ticks++;
+
+    // if(current_task->ticks > 0){
     //     return;
     // }
-    // current_task->status = TASK_READY;
-    // temp->status = TASK_RUNNING;
-    // current_task = temp;
-
-
-    // // we must change tss's esp0 to current_task's stackframe when happen task switch. 
-    // write_tss((uint32_t)current_task + sizeof(STACKFRAME));
+    schedule();
 }
 
+// a template syscall
+// eax=1: print current_task's name
+// eax=2: get ticks
 void handler_syscall(){
-    // uint32_t *info = NULL;
-    // asm volatile("":"=a"(info):);
-    
-    // put_str(current_task->name);
-    // put_str("    ");
-    // put_str(info);
-    // put_str("\n");    
-    // asm volatile(""::"a"(1));
+    uint32_t call_num = 0;
+    asm volatile("":"=a"(call_num));
+    ASSERT(call_num == 1 || call_num == 2);
+
+    if(call_num == 1){
+        // put_str("handler_syscall---> call_num: ");
+        // put_int(call_num);
+        // put_str("  ");
+        put_str(current_task->name);
+        put_str(" ------ ticks: ");
+        put_int(current_task->ticks);
+        put_str(" ------ priority: ");
+        put_int(current_task->priority);
+        put_str(" ------ run_ticks: ");
+        put_int(current_task->run_ticks);
+        put_str("\n");
+        // put_str(" \n");
+        return;
+    }
+    asm volatile(""::"a"(clock_ticks));
 }
 
 
@@ -116,7 +116,7 @@ static void init_gate_descriptor(){
         make_gate_descriptor(&idt[i], IDT_ATTRIBUTE_DPL0, interrupt_handler_entrys[i]);
     }
     // init clock interrupt
-    make_gate_descriptor(&idt[32], IDT_ATTRIBUTE_DPL0, interrupt_handler_entrys[32]);
+    make_gate_descriptor(&idt[32], IDT_ATTRIBUTE_DPL3, interrupt_handler_entrys[32]);
 
     // init 33
     make_gate_descriptor(&idt[33], IDT_ATTRIBUTE_DPL3, interrupt_handler_entrys[33]);

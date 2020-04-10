@@ -14,6 +14,8 @@ section .data               ; you can't delete this line, or it will not find ha
 
 interrupt_handler_entrys:
 
+
+; this is for cpu inside interrupt(0~31 verctor num)
 %macro VECTOR 2
 section .text
 interrupt_handler_entry%1:
@@ -37,7 +39,7 @@ interrupt_handler_entry%1:
 
     ; sti;
 
-    popad   
+    popad
     pop fs
     pop gs
     pop es
@@ -51,7 +53,8 @@ section .data
 %endmacro
 
 
-
+; this is for general interrupt, but it didn't have 'push %1' and 'add esp, 4' below
+; this means their interrupt handle function no args
 %macro VECTOR_NOARGS 2
 section .text
 interrupt_handler_entry%1:
@@ -75,7 +78,8 @@ interrupt_handler_entry%1:
 
     ; sti;
 
-    popad   
+    popad
+
     pop fs
     pop gs
     pop es
@@ -88,7 +92,56 @@ section .data
 
 %endmacro
 
+; this is for syscall mainly, their interrupt handler no args.
+; alse their 'eax' as return value.
+%macro VECTOR_SYSCALL 2
+section .text
+interrupt_handler_entry%1:
+    %2
 
+    push ds
+    push es
+    push gs
+    push fs
+    pushad
+    
+    mov esp, 0x80000
+    ; push %1
+    call [interrupt_handler_table + %1*4]    ; this maybe use 'eax' as return value.
+    ; add esp, 4
+
+    push eax                                 ; don't change eax
+    mov al, 0x20
+    out 0xa0, al
+    out 0x20, al
+    pop eax
+
+    mov esp, [current_task]
+
+    pop edi
+    pop esi
+    pop ebp
+    ; pop esp
+    add esp, 4
+
+    pop ebx
+    pop edx
+    pop ecx
+    ; pop eax                                
+    add esp, 4                  ; there maybe will be changed, because
+                                ; ebx, ecx, edx maybe as args
+
+    pop fs
+    pop gs
+    pop es
+    pop ds
+
+    add esp, 4
+    iret
+section .data
+    dd interrupt_handler_entry%1
+
+%endmacro
 
 ; CPU inside interrupt
 VECTOR 0x00,ZERO
@@ -125,5 +178,11 @@ VECTOR 0x1e,ERROR_CODE
 VECTOR 0x1f,ZERO 
 
 ; user defined interrupt
-VECTOR_NOARGS 0x20,ZERO
-VECTOR_NOARGS 0x21,ZERO
+; no args, no return. just general interrupt
+VECTOR_NOARGS 0x20,ZERO                             ; clock interrupt
+
+
+; user defined interrupt
+; having args and return values.
+; for syscall mainly
+VECTOR_SYSCALL 0x21,ZERO

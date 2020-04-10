@@ -5,7 +5,7 @@
 
 void lancer_init(){
     idt_init();
-    timer_init(100);
+    timer_init(PIT_HZ);
     memory_init();
     schedule_init();
 }

@@ -8,6 +8,8 @@ void init_tasks();
 void init_stackframe_with_user_mode(STACKFRAME *stackframe, void *eip, void *esp);
 void run_new_task(uint8_t *task_name, void *func);
 
+TASK* schedule_priority();
+TASK* schedule_time_ticks();
 
 TASK *current_task;
 TASK *task_head_ready;
@@ -26,19 +28,65 @@ void schedule_init(){
 }
 
 void schedule(){
-    TASK *temp = 0;
-    uint32_t i = (current_task-tasks);
+	TASK *new_task = schedule_priority();
+	if(current_task == new_task){
+		return;
+	}
+    switch_to(current_task, new_task);
+}
+
+
+TASK* schedule_priority(){
+	current_task->ticks--;
+	if(current_task->ticks > 0){
+		return current_task;
+	}
+	ASSERT(current_task->ticks <= 0);
+
+	int32_t great_priority = 0;
+	TASK *new_task = NULL;
+	while(new_task == NULL){
+		for (uint32_t i = 0; i < TASK_MAX_NUM; i++){
+			if(tasks[i].status == TASK_READY && great_priority < tasks[i].ticks){
+				great_priority = tasks[i].ticks;
+				new_task = &tasks[i];
+			}
+		}
+		if(new_task != NULL){
+			return new_task;
+		}
+		/*
+		put_str("    ********************************    \n");
+		for (uint32_t i = 0; i < TASK_MAX_NUM; i++){
+			if(tasks[i].status == TASK_READY || tasks[i].status == TASK_RUNNING){
+				put_str(tasks[i].name);
+				put_str(" -------  ticks: ");
+				put_int(tasks[i].ticks);
+				put_str(" -------  priority: ");
+				put_int(tasks[i].priority);
+				put_str(" -------  run_ticks: ");
+				put_int(tasks[i].run_ticks);
+				put_str("\n");
+			}
+		}
+		asm volatile("cli; hlt");
+		*/
+		for (uint32_t i = 0; i < TASK_MAX_NUM; i++){
+			if(tasks[i].status == TASK_READY || tasks[i].status == TASK_RUNNING){
+				tasks[i].ticks = tasks[i].priority;
+			}
+		}		
+	}	
+}
+
+
+TASK* schedule_time_ticks(){
+    uint32_t i = (current_task-tasks+1)%TASK_MAX_NUM;
     for (; i < TASK_MAX_NUM; i = (i+1)%TASK_MAX_NUM){
-        if(tasks[i].status == TASK_READY){
-            temp = &tasks[i];
-            break;   
+        if(tasks[i].status == TASK_READY || i == (current_task - tasks)){
+            return &tasks[i];   
         }
     }
-	
-    if(temp == 0){
-        return;
-    }
-    switch_to(current_task, temp);
 }
 
 
@@ -107,8 +155,9 @@ void init_tasks(){
 		init_stackframe_with_user_mode(&tasks[i].stackframe, 0, 0);		
 		tasks[i].pid = -1;
 		tasks[i].status = TASK_DIED;
-		tasks[i].time_counter = TASK_TIMECOUNTER;
+		tasks[i].ticks = TASK_TICKS;
 		tasks[i].priority = TASK_PRIORITY;
+		tasks[i].run_ticks = 0;
 		tasks[i].r3		= 0;
 		tasks[i].next	= 0;
 		strcpy(tasks[i].name, init_name);
