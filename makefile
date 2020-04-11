@@ -14,7 +14,8 @@ NASMCompile	= nasm $(NASMARGS)
 LANCER_OBJECT	=  $(BUILDDIR)/lancer.o $(BUILDDIR)/interrupt_c.o \
 	$(BUILDDIR)/init.o $(BUILDDIR)/timer.o $(BUILDDIR)/debug.o $(BUILDDIR)/print.o \
 	$(BUILDDIR)/interrupt_asm.o $(BUILDDIR)/string.o $(BUILDDIR)/bitmap.o \
-	$(BUILDDIR)/malloc.o $(BUILDDIR)/schedule.o $(BUILDDIR)/global.o
+	$(BUILDDIR)/malloc.o $(BUILDDIR)/schedule.o $(BUILDDIR)/global.o \
+	$(BUILDDIR)/keyboard.o $(BUILDDIR)/syscall.o
 
 
 # BOOT and SETUP
@@ -41,6 +42,8 @@ $(BUILDDIR)/schedule.o: ./kernel/schedule.c
 	$(GCCCompile) -c $^ -o $@
 $(BUILDDIR)/global.o: ./kernel/global.c
 	$(GCCCompile) -c $^ -o $@
+$(BUILDDIR)/syscall.o: ./kernel/syscall.c
+	$(GCCCompile) -c $^ -o $@
 
 
 $(BUILDDIR)/string.o: ./lib/kernel/string.c
@@ -51,6 +54,8 @@ $(BUILDDIR)/print.o: ./lib/kernel/print.asm
 	$(NASMCompile) $^ -o $@
 
 $(BUILDDIR)/timer.o: ./device/timer.c
+	$(GCCCompile) -c $^ -o $@
+$(BUILDDIR)/keyboard.o: ./device/keyboard.c
 	$(GCCCompile) -c $^ -o $@
 
 
