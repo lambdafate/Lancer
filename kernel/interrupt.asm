@@ -79,7 +79,6 @@ interrupt_handler_entry%1:
     ; sti;
 
     popad
-
     pop fs
     pop gs
     pop es
@@ -180,9 +179,9 @@ VECTOR 0x1f,ZERO
 ; user defined interrupt
 ; no args, no return. just general interrupt
 VECTOR_NOARGS 0x20,ZERO                             ; clock interrupt
-
+VECTOR_NOARGS 0x21,ZERO                             ; keyboard interrupt
 
 ; user defined interrupt
 ; having args and return values.
 ; for syscall mainly
-VECTOR_SYSCALL 0x21,ZERO
+VECTOR_SYSCALL 0x80,ZERO

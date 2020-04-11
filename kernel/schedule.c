@@ -5,8 +5,8 @@
 #include "debug.h"
 
 void init_tasks();
-void init_stackframe_with_user_mode(STACKFRAME *stackframe, void *eip, void *esp);
-void run_new_task(uint8_t *task_name, void *func);
+void init_stackframe(STACKFRAME *stackframe, void *eip, void *esp, uint8_t ring);
+int8_t run_new_task(uint8_t *task_name, void *func, uint8_t ring);
 
 TASK* schedule_priority();
 TASK* schedule_time_ticks();
@@ -29,9 +29,7 @@ void schedule_init(){
 
 void schedule(){
 	TASK *new_task = schedule_priority();
-	if(current_task == new_task){
-		return;
-	}
+	
     switch_to(current_task, new_task);
 }
 
@@ -47,7 +45,7 @@ TASK* schedule_priority(){
 	TASK *new_task = NULL;
 	while(new_task == NULL){
 		for (uint32_t i = 0; i < TASK_MAX_NUM; i++){
-			if(tasks[i].status == TASK_READY && great_priority < tasks[i].ticks){
+			if((tasks[i].status == TASK_READY || tasks[i].status == TASK_RUNNING) && great_priority < tasks[i].ticks){
 				great_priority = tasks[i].ticks;
 				new_task = &tasks[i];
 			}
@@ -91,6 +89,9 @@ TASK* schedule_time_ticks(){
 
 
 void switch_to(TASK *curr_task, TASK *new_task){
+	if(curr_task == new_task){
+		return;
+	}
 	curr_task->status = TASK_READY;
 	new_task->status  = TASK_RUNNING;
 	// maybe switch r3
@@ -103,7 +104,9 @@ void switch_to(TASK *curr_task, TASK *new_task){
 
 
 
-void run_new_task(uint8_t *task_name, void *func){
+int8_t run_new_task(uint8_t *task_name, void *func, uint8_t ring){
+	ASSERT(ring == TASK_RING0 || ring == TASK_RING3);
+
 	TASK *temp = 0;
 	for (uint32_t i = 0; i < TASK_MAX_NUM; i++){
 		if(tasks[i].status == TASK_DIED){
@@ -112,15 +115,16 @@ void run_new_task(uint8_t *task_name, void *func){
 		}
 	}
 	if(temp == 0){
-		return;
+		return -1;
 	}
 
 	temp->status = TASK_READY;
-	init_stackframe_with_user_mode(&temp->stackframe, func, 0x1000);
+	init_stackframe(&temp->stackframe, func, 0x1000, ring);
 	// set task name
 	strcpy(temp->name, task_name);
 	// change current_task
 	current_task =temp;
+	return 1;
 }
 
 void switch_to_user_mode(){
@@ -152,7 +156,7 @@ void switch_to_user_mode(){
 void init_tasks(){
 	uint8_t* init_name = "you should't see it.";
 	for (uint32_t i = 0; i < TASK_MAX_NUM; i++){
-		init_stackframe_with_user_mode(&tasks[i].stackframe, 0, 0);		
+		init_stackframe(&tasks[i].stackframe, 0, 0, TASK_RING3);		
 		tasks[i].pid = -1;
 		tasks[i].status = TASK_DIED;
 		tasks[i].ticks = TASK_TICKS;
@@ -168,16 +172,31 @@ void init_tasks(){
 
 
 // eip: target func address, where you will run begin.
-// esp: user mode's stack.
-void init_stackframe_with_user_mode(STACKFRAME *stackframe, void *eip, void *esp){
-	stackframe->fs = GDT_SELECTOR_USER_DATA;
-	stackframe->gs = GDT_SELECTOR_USER_DATA;
-	stackframe->es = GDT_SELECTOR_USER_DATA;
-	stackframe->ds = GDT_SELECTOR_USER_DATA;
+void init_stackframe(STACKFRAME *stackframe, void *eip, void *esp, uint8_t ring){
+	ASSERT(ring == TASK_RING0 || ring == TASK_RING3);
 
-	stackframe->ss = GDT_SELECTOR_USER_STACK;
-	stackframe->esp = esp;
+	if(ring == TASK_RING3){
+		stackframe->fs = GDT_SELECTOR_USER_DATA;
+		stackframe->gs = GDT_SELECTOR_USER_DATA;
+		stackframe->es = GDT_SELECTOR_USER_DATA;
+		stackframe->ds = GDT_SELECTOR_USER_DATA;
+
+		stackframe->ss = GDT_SELECTOR_USER_STACK;
+		stackframe->esp = esp;
+		stackframe->eflags = 0x0202;
+		stackframe->cs = GDT_SELECTOR_USER_CODE;
+		stackframe->eip = eip;
+
+		return;
+	}
+	stackframe->fs = GDT_SELECTOR_KERNEL_SCREEN;
+	stackframe->gs = GDT_SELECTOR_KERNEL_SCREEN;
+	stackframe->es = GDT_SELECTOR_KERNEL_DATA;
+	stackframe->ds = GDT_SELECTOR_KERNEL_DATA;
+
+	stackframe->ss = GDT_SELECTOR_KERNEL_STACK;
+	stackframe->esp = (esp == NULL ? KERNEL_STACKTOP : esp);
 	stackframe->eflags = 0x0202;
-	stackframe->cs = GDT_SELECTOR_USER_CODE;
+	stackframe->cs = GDT_SELECTOR_KERNEL_CODE;
 	stackframe->eip = eip;
 }

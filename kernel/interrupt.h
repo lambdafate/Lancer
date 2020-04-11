@@ -8,6 +8,10 @@
 #define PIC_S_CTRL  0xa0
 #define PIC_S_DATA  0xa1
 
+// idt' descriptor attribute
+#define IDT_ATTRIBUTE_DPL0                    0x8e
+#define IDT_ATTRIBUTE_DPL3                    0xee
+
 typedef struct{
     uint16_t handler_low;
     uint16_t selector;
@@ -17,7 +21,7 @@ typedef struct{
 }gate_descriptor;
 
 
-
+extern uint32_t clock_ticks;
 void idt_init();
 
 #endif

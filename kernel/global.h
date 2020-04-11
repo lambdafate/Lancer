@@ -2,13 +2,14 @@
 #define _KERNEL_GLOBAL_H
 #include "stdint.h"
 
+#define KERNEL_STACKTOP                       0x80000
 
-#define RPL0        0
-#define RPL1        1
-#define RPL2        2
-#define RPL3        3
-#define TI_GDT      0
-#define TI_LDT      1
+#define RPL0                                  0
+#define RPL1                                  1
+#define RPL2                                  2
+#define RPL3                                  3
+#define TI_GDT                                0
+#define TI_LDT                                1 
 
 #define GDT_ADDRESS                           0x00080000
 #define GDT_SIZE                              9
@@ -35,10 +36,6 @@
 #define GDT_SELECTOR_USER_CODE                ((GDT_INDEX_USER_CODE << 3) | RPL3)
 #define GDT_SELECTOR_USER_DATA                ((GDT_INDEX_USER_DATA << 3) | RPL3)
 #define GDT_SELECTOR_USER_STACK               ((GDT_INDEX_USER_STACK << 3) | RPL3)
-
-// idt' descriptor attribute
-#define IDT_ATTRIBUTE_DPL0                    0x8e
-#define IDT_ATTRIBUTE_DPL3                    0xee
 
 
 // global descriptor

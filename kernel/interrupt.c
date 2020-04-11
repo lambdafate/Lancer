@@ -5,6 +5,8 @@
 #include "interrupt.h"
 #include "schedule.h"
 #include "debug.h"
+#include "keyboard.h"
+#include "syscall.h"
 
 uint32_t clock_ticks = 0;
 
@@ -25,14 +27,12 @@ gate_descriptor idt[IDT_NUM];                       // interrupt descriptor tabl
 static void init_pic();
 static void init_gate_descriptor();
 static void make_gate_descriptor(gate_descriptor* gate, uint8_t attribute, void* handler);
-static void init_hander_table();
+static void init_handler_table();
 static void handler_cpu_inside(uint8_t verctor);
 
 
 void handler_clock(){
-    // put_str("handler-clock----\n");
     clock_ticks++;
-
     current_task->run_ticks++;
 
     // if(current_task->ticks > 0){
@@ -41,36 +41,10 @@ void handler_clock(){
     schedule();
 }
 
-// a template syscall
-// eax=1: print current_task's name
-// eax=2: get ticks
-void handler_syscall(){
-    uint32_t call_num = 0;
-    asm volatile("":"=a"(call_num));
-    ASSERT(call_num == 1 || call_num == 2);
-
-    if(call_num == 1){
-        // put_str("handler_syscall---> call_num: ");
-        // put_int(call_num);
-        // put_str("  ");
-        put_str(current_task->name);
-        put_str(" ------ ticks: ");
-        put_int(current_task->ticks);
-        put_str(" ------ priority: ");
-        put_int(current_task->priority);
-        put_str(" ------ run_ticks: ");
-        put_int(current_task->run_ticks);
-        put_str("\n");
-        // put_str(" \n");
-        return;
-    }
-    asm volatile(""::"a"(clock_ticks));
-}
-
 
 // init interrupt descriptor table
 void idt_init(){   
-    init_hander_table(); 
+    init_handler_table(); 
     init_gate_descriptor();                 
     init_pic();                                 // init programable interrupt controller
 
@@ -81,15 +55,18 @@ void idt_init(){
 }
 
 
-static void init_hander_table(){
+static void init_handler_table(){
     for (uint32_t i = 0; i < 32; i++){
         interrupt_handler_table[i] = handler_cpu_inside;
         interrupt_info[i] = "unknown";
     }
-    // clock interrupt
-    interrupt_handler_table[32] = handler_clock;
-    // a template syscall.
-    interrupt_handler_table[33] = handler_syscall;
+    // clock interrupt.
+    interrupt_handler_table[0x20] = handler_clock;
+    // keyboard interrupt.
+    interrupt_handler_table[0x21] = handler_keyboard;
+
+    // syscall
+    interrupt_handler_table[0x80] = handler_syscall;
 }
 
 
@@ -116,11 +93,15 @@ static void init_gate_descriptor(){
         make_gate_descriptor(&idt[i], IDT_ATTRIBUTE_DPL0, interrupt_handler_entrys[i]);
     }
     // init clock interrupt
-    make_gate_descriptor(&idt[32], IDT_ATTRIBUTE_DPL3, interrupt_handler_entrys[32]);
+    make_gate_descriptor(&idt[0x20], IDT_ATTRIBUTE_DPL3, interrupt_handler_entrys[32]);
 
-    // init 33
-    make_gate_descriptor(&idt[33], IDT_ATTRIBUTE_DPL3, interrupt_handler_entrys[33]);
+    // init keyboard interrupt
+    make_gate_descriptor(&idt[0x21], IDT_ATTRIBUTE_DPL3, interrupt_handler_entrys[33]);
+
+    // init syscall interrupt
+    make_gate_descriptor(&idt[0x80], IDT_ATTRIBUTE_DPL3, interrupt_handler_entrys[34]);
 }
+
 
 // init intel 8259A
 static void init_pic(){
@@ -137,12 +118,9 @@ static void init_pic(){
     outb(PIC_S_DATA, 0x01);
 
     // open master's IR0
-    outb(PIC_M_DATA, 0xfe);
+    outb(PIC_M_DATA, 0xff-2);
     outb(PIC_S_DATA, 0xff);
 }
-
-
-
 
 
 static void make_gate_descriptor(gate_descriptor* gate, uint8_t attribute, void* handler){

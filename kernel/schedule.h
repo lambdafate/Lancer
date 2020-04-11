@@ -6,7 +6,8 @@
 #define TASK_MAX_NUM                    30
 #define TASK_TICKS                       3
 #define TASK_PRIORITY                    3
-
+#define TASK_RING0                       0
+#define TASK_RING3                       3
 
 enum TASK_STATUS{
     TASK_READY,
@@ -42,4 +43,7 @@ void schedule_init();
 void switch_to_user_mode();
 void schedule();
 void switch_to(TASK *curr_task, TASK *new_task);
+void init_stackframe(STACKFRAME *stackframe, void *eip, void *esp, uint8_t ring);
+int8_t run_new_task(uint8_t *task_name, void *func, uint8_t ring);
+
 #endif
