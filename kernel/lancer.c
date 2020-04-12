@@ -29,6 +29,11 @@ int main(){
 	asm volatile("cli");
 	
 	welcome();
+
+	while(1){
+
+	}
+
 	lancer_init();
 
 	// run_new_task("A--", _task0);     
@@ -50,8 +55,10 @@ int main(){
 
 
 void welcome(){
-	put_str("[/kernel/lancer       ]: ");
-	put_str("welcome to lancer!\n");
+	// printk("hello, %c, %c\n", 'G', 'F');
+	printk("%s", "");
+	// printk("[/kernel/lancer       ]: ");
+	// printk("welcome to lancer!\n");
 }
 
 

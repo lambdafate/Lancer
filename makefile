@@ -15,7 +15,7 @@ LANCER_OBJECT	=  $(BUILDDIR)/lancer.o $(BUILDDIR)/interrupt_c.o \
 	$(BUILDDIR)/init.o $(BUILDDIR)/timer.o $(BUILDDIR)/debug.o $(BUILDDIR)/print.o \
 	$(BUILDDIR)/interrupt_asm.o $(BUILDDIR)/string.o $(BUILDDIR)/bitmap.o \
 	$(BUILDDIR)/malloc.o $(BUILDDIR)/schedule.o $(BUILDDIR)/global.o \
-	$(BUILDDIR)/keyboard.o $(BUILDDIR)/syscall.o
+	$(BUILDDIR)/keyboard.o $(BUILDDIR)/syscall.o $(BUILDDIR)/print_c.o
 
 
 # BOOT and SETUP
@@ -50,8 +50,11 @@ $(BUILDDIR)/string.o: ./lib/kernel/string.c
 	$(GCCCompile) -c $^ -o $@
 $(BUILDDIR)/bitmap.o: ./lib/kernel/bitmap.c
 	$(GCCCompile) -c $^ -o $@
+$(BUILDDIR)/print_c.o: ./lib/kernel/print.c
+	$(GCCCompile) -c $^ -o $@
 $(BUILDDIR)/print.o: ./lib/kernel/print.asm
 	$(NASMCompile) $^ -o $@
+
 
 $(BUILDDIR)/timer.o: ./device/timer.c
 	$(GCCCompile) -c $^ -o $@
