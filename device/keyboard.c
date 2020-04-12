@@ -4,7 +4,8 @@
 #include "keyboard.h"
 #include "string.h"
 
-// 以下定义全部来自操作系统真相还原.
+// 以下定义全部来自 <<操作系统真相还原>>: https://book.douban.com/subject/26745156/
+
 #define esc		                    '\033'	 
 #define backspace	                '\b'
 #define tab		                    '\t'
@@ -24,19 +25,25 @@
 /* 定义控制字符的通码和断码 */
 #define shift_l_make	            0x2a
 #define shift_r_make 	            0x36 
+#define shift_l_break               (shift_l_make+0x80)
+#define shift_r_break               (shift_r_make+0x80)
+
 #define alt_l_make   	            0x38
 #define alt_r_make   	            0xe038
+#define alt_l_break                 0xb8
 #define alt_r_break   	            0xe0b8
+
 #define ctrl_l_make  	            0x1d
 #define ctrl_r_make  	            0xe01d
+#define ctrl_l_break                0x9d
 #define ctrl_r_break 	            0xe09d
+
 #define caps_lock_make 	            0x3a
 
 
-/* 定义以下变量记录相应键是否按下的状态,
- * ext_scancode用于记录makecode是否以0xe0开头 */
+// 定义以下变量记录相应键是否按下的状态,
 static uint8_t ctrl_status = 0, shift_status = 0, alt_status = 0, 
-               caps_lock_status = 0, ext_scancode = 0;
+               caps_lock_status = 0;
 
 /* 以通码make_code为索引的二维数组 */
 static uint32_t keymap[][2] = {
@@ -133,12 +140,13 @@ void kb_buffer_init(){
 }
 
 
+// main deal with keyboard input.
+// ctrl, alt, shift: 1 when make code, 0 when break code. 
 void task_keyboard(){
     while(1){
         if(isempty()){
             continue;
         }
-        // ctrl_status = 0, shift_status = 0, alt_status = 0;
         while(kb_buffer.size){
             uint8_t code = pop_first();
             if(code == 0xe0){
@@ -146,14 +154,25 @@ void task_keyboard(){
                     continue;
                 }
                 code = pop_first();
-                if(code == 0x38){                       // alt
+                if(code == 0x38){                       // alt make code
                     alt_status = 1;
-                }else if(code == 0x1d){                 // ctrl
+                }else if(code == 0xb8){                 // alt break code
+                    alt_status = 0;
+                }else if(code == 0x1d){                 // ctrl make code
                     ctrl_status = 1;
+                }else if(code == 0x9d){                 // ctrl break code
+                    ctrl_status = 0;
                 }
                 continue;
             }
-            if(code >= 0x3A){
+            if(code > 0x3A){
+                if(code == shift_l_break || code == shift_r_break){
+                    shift_status = 0;
+                }else if(code == alt_l_break){
+                    alt_status = 0;
+                }else if(code == ctrl_l_break){
+                    ctrl_status = 0;
+                }
                 continue;
             }
 
@@ -166,7 +185,7 @@ void task_keyboard(){
             switch (code){
                 case 0x00:
                 case 0x01:                                          // esc
-                    printf(" you push esc? "); 
+                    // printf(" you push esc? "); 
                     break; 
                 case 0x0E:                                          // backspace
                     printf("%c", backspace);
@@ -177,26 +196,27 @@ void task_keyboard(){
                 case 0X1C:                                          // enter
                     printf("\n");
                     break;
-                case 0x1D:                                          // ctrl
+                case ctrl_l_make:                                   // ctrl
                     ctrl_status = 1;
                     break;
-                case 0x2A:                                          // shift
-                case 0x36:
-                    printf(" you push shift! ");
+                case shift_l_make:                                  // shift
+                case shift_r_make:
+                    // printf(" you push shift! ");
                     shift_status = 1;
                     break;
-                case 0x38:                                          // alt
+                case alt_l_make:                                    // alt
                     alt_status = 1;
                     break;
-                case 0x3A:
-                    printf(" you push caps! ");
+                case caps_lock_make:
+                    // printf(" you push caps! ");
                     caps_lock_status = !caps_lock_status;
                     break;
                 default:
-                    printf("%c", keymap[code][shift_status]);
+                    // there is different with normal. 
+                    // this will print shift-staus-char when shift_status=1 or caps_lock_status=1.
+                    printf("%c", keymap[code][shift_status || caps_lock_status]);
                     break;
             }
-            // ctrl_status = 0, shift_status = 0, alt_status = 0;
         }
         
     }
