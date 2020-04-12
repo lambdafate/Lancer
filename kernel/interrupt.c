@@ -118,7 +118,7 @@ static void init_pic(){
     outb(PIC_S_DATA, 0x01);
 
     // open master's IR0
-    outb(PIC_M_DATA, 0xff-2);
+    outb(PIC_M_DATA, 0xff-3);
     outb(PIC_S_DATA, 0xff);
 }
 

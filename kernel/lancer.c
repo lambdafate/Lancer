@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "timer.h"
 #include "keyboard.h"
+#include "syscall.h"
 
 void welcome();
 void _task0();
@@ -13,7 +14,7 @@ void _task0();
 
 uint32_t get_ticks(){
 	uint32_t ticks = 0;
-	asm volatile("int $0x80":"=a"(ticks):"a"(2));
+	ticks = sys_get_ticks();
 	return ticks;
 }
 
@@ -23,27 +24,24 @@ void delay(uint32_t ms){
 	while((get_ticks()-flag) * 1000 / PIT_HZ < ms){}
 }
 
-
 int main(){
 
 	asm volatile("cli");
-	
 	welcome();
-
-	while(1){
-
-	}
-
 	lancer_init();
 
 	// run_new_task("A--", _task0);     
 	// tasks[0].stackframe.esp = 0x1000; 
 	// tasks[0].ticks = tasks[0].priority = 200;
 
+	// run keyboard scan task
+	run_new_task("scan-keyboard-input", task_keyboard, TASK_RING3);     
+	tasks[0].stackframe.esp = 0x6000; 
+	tasks[0].ticks = tasks[0].priority = 10;
 	
 	run_new_task("test-task", _task0, TASK_RING3);     
 	tasks[0].stackframe.esp = 0x3000; 
-	tasks[0].ticks = tasks[0].priority = 200;
+	tasks[0].ticks = tasks[0].priority = 5;
 
 
 	put_str("i am here\n");
@@ -55,18 +53,15 @@ int main(){
 
 
 void welcome(){
-	// printk("hello, %c, %c\n", 'G', 'F');
-	printk("%s", "");
-	// printk("[/kernel/lancer       ]: ");
-	// printk("welcome to lancer!\n");
+	printk("[/kernel/lancer       ]: ");
+	printk("welcome to lancer!\n");
 }
 
 
 
 void _task0(){
 	while(1){
-		asm volatile("int $0x80"::"a"(1));
-		// delay(10);
+		// printf("\n### %c %s %c ####\n", '-', "Hello, i am in _test0(user mode)!", '-');
 	}
 }
 
