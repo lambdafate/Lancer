@@ -7,6 +7,8 @@
 #include "timer.h"
 #include "keyboard.h"
 #include "syscall.h"
+#include "page.h"
+
 
 void welcome();
 void _task0();
@@ -30,6 +32,8 @@ int main(){
 	welcome();
 	lancer_init();
 	
+	// show_page_map();
+
 	// run_new_task("A--", _task0);     
 	// tasks[0].stackframe.esp = 0x1000; 
 	// tasks[0].ticks = tasks[0].priority = 200;
@@ -61,9 +65,10 @@ void welcome(){
 
 void _task0(){
 	while(1){
-		uint8_t *test = (uint8_t*)(0x400000);
-		uint8_t res = *test;
-	
+		uint32_t *test = (uint32_t*)((0<<22) + (256<<12));
+		*test = 0xffffffff;
+		uint32_t *test2 = (uint32_t*)(0x0000);
+		ASSERT(*test == *test2);
 	}
 }
 

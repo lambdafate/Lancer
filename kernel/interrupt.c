@@ -7,6 +7,7 @@
 #include "debug.h"
 #include "keyboard.h"
 #include "syscall.h"
+#include "page.h"
 
 uint32_t clock_ticks = 0;
 
@@ -40,18 +41,6 @@ void handler_clock(){
     // }
     schedule();
 }
-
-void handler_page_fault(uint8_t vector){
-    put_str("page fault\n");
-    void *linear = NULL;
-    asm volatile("movl %%cr2, %%eax":"=a"(linear));
-    put_hex(linear);
-    put_char('\n');
-    put_hex(current_task->stackframe.error_code);
-    while(1){}
-}
-
-
 
 // init interrupt descriptor table
 void idt_init(){   

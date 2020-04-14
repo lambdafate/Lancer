@@ -14,10 +14,13 @@ typedef struct{
     uint32_t frame_address : 20;
 }__attribute((packed)) page_t;
 
+
 typedef struct{
     page_t pages[1024];
 }page_table_t;
 
 
+void handler_page_fault(uint8_t vector);
+void show_page_map();
 
 #endif
