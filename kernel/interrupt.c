@@ -41,6 +41,17 @@ void handler_clock(){
     schedule();
 }
 
+void handler_page_fault(uint8_t vector){
+    put_str("page fault\n");
+    void *linear = NULL;
+    asm volatile("movl %%cr2, %%eax":"=a"(linear));
+    put_hex(linear);
+    put_char('\n');
+    put_hex(current_task->stackframe.error_code);
+    while(1){}
+}
+
+
 
 // init interrupt descriptor table
 void idt_init(){   
@@ -60,6 +71,9 @@ static void init_handler_table(){
         interrupt_handler_table[i] = handler_cpu_inside;
         interrupt_info[i] = "unknown";
     }
+    // page fault.
+    interrupt_handler_table[14] = handler_page_fault;
+
     // clock interrupt.
     interrupt_handler_table[0x20] = handler_clock;
     // keyboard interrupt.
@@ -79,7 +93,7 @@ static void handler_cpu_inside(uint8_t verctor){
     put_int(verctor);
     put_str(" -- ");
     put_str(interrupt_info[verctor]);
-    // put_char('\n');
+    put_char('\n');
     for(int i=0; i<1000000; i++){
 
 	}
@@ -92,11 +106,12 @@ static void init_gate_descriptor(){
     for (int32_t i = 0; i < 32; i++){
         make_gate_descriptor(&idt[i], IDT_ATTRIBUTE_DPL0, interrupt_handler_entrys[i]);
     }
+
     // init clock interrupt
-    make_gate_descriptor(&idt[0x20], IDT_ATTRIBUTE_DPL3, interrupt_handler_entrys[32]);
+    make_gate_descriptor(&idt[0x20], IDT_ATTRIBUTE_DPL0, interrupt_handler_entrys[32]);
 
     // init keyboard interrupt
-    make_gate_descriptor(&idt[0x21], IDT_ATTRIBUTE_DPL3, interrupt_handler_entrys[33]);
+    make_gate_descriptor(&idt[0x21], IDT_ATTRIBUTE_DPL0, interrupt_handler_entrys[33]);
 
     // init syscall interrupt
     make_gate_descriptor(&idt[0x80], IDT_ATTRIBUTE_DPL3, interrupt_handler_entrys[34]);

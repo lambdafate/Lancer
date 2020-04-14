@@ -173,7 +173,7 @@ void init_tasks(){
 
 // eip: target func address, where you will run begin.
 void init_stackframe(STACKFRAME *stackframe, void *eip, void *esp, uint8_t ring){
-	ASSERT(ring == TASK_RING0 || ring == TASK_RING3);
+	ASSERT(ring == TASK_RING3);
 
 	if(ring == TASK_RING3){
 		stackframe->fs = GDT_SELECTOR_USER_DATA;
@@ -189,6 +189,7 @@ void init_stackframe(STACKFRAME *stackframe, void *eip, void *esp, uint8_t ring)
 
 		return;
 	}
+	/*
 	stackframe->fs = GDT_SELECTOR_KERNEL_SCREEN;
 	stackframe->gs = GDT_SELECTOR_KERNEL_SCREEN;
 	stackframe->es = GDT_SELECTOR_KERNEL_DATA;
@@ -199,4 +200,5 @@ void init_stackframe(STACKFRAME *stackframe, void *eip, void *esp, uint8_t ring)
 	stackframe->eflags = 0x0202;
 	stackframe->cs = GDT_SELECTOR_KERNEL_CODE;
 	stackframe->eip = eip;
+	*/
 }

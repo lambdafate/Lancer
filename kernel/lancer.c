@@ -29,7 +29,7 @@ int main(){
 	asm volatile("cli");
 	welcome();
 	lancer_init();
-
+	
 	// run_new_task("A--", _task0);     
 	// tasks[0].stackframe.esp = 0x1000; 
 	// tasks[0].ticks = tasks[0].priority = 200;
@@ -61,7 +61,9 @@ void welcome(){
 
 void _task0(){
 	while(1){
-		// printf("\n### %c %s %c ####\n", '-', "Hello, i am in _test0(user mode)!", '-');
+		uint8_t *test = (uint8_t*)(0x400000);
+		uint8_t res = *test;
+	
 	}
 }
 
