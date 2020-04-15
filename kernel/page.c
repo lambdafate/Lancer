@@ -3,6 +3,7 @@
 #include "schedule.h"
 #include "print.h"
 #include "debug.h"
+#include "malloc.h"
 
 static uint32_t get_pdt_index(void *linear);
 static uint32_t get_pet_index(void *linear);
@@ -12,6 +13,7 @@ static uint32_t get_pet_index(void *linear);
 void handler_page_fault(uint8_t vector){
     void *linear = NULL;
     asm volatile("movl %%cr2, %%eax":"=a"(linear));
+
     printk("\npage fault happens!\n");
     printk("cause linear address: ");
     put_hex(linear);
@@ -31,8 +33,8 @@ void handler_page_fault(uint8_t vector){
         pet->pages[pet_index].present = 1;
         pet->pages[pet_index].rw      = 1;
         pet->pages[pet_index].us      = 1;
-        pet->pages[pet_index].frame_address = 0;
-        printk("i finished.\n");
+        pet->pages[pet_index].frame_address = (uint32_t)pmalloc() >> 12;
+        printk("malloc page address: %x\n", pet->pages[pet_index].frame_address<<12);
         return;
     }
     while(1){}
@@ -50,6 +52,9 @@ static uint32_t get_pet_index(void *linear){
     uint32_t index = ((uint32_t)(linear) >> 12) & 0x003ff;
     return index;
 }
+
+
+
 
 // just for a test
 void show_page_map(){

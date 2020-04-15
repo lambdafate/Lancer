@@ -31,7 +31,17 @@ int main(){
 	asm volatile("cli");
 	welcome();
 	lancer_init();
-	
+
+	// printk("%s, %d,  %x\n", "test", 12, 0xa00000);
+	// while(1){}
+	 
+	// int8_t *test_reverse = "abcd efgk";
+	// put_str(test_reverse);
+	// put_str("\n");
+	// put_str(str_reverse(test_reverse));
+	// while(1){}
+
+
 	// show_page_map();
 
 	// run_new_task("A--", _task0);     
@@ -47,6 +57,13 @@ int main(){
 	tasks[0].stackframe.esp = 0x3000; 
 	tasks[0].ticks = tasks[0].priority = 5;
 
+
+	int num = 10;
+	while(num--){
+		void *page = pmalloc();
+		printk("%x:  %x\n", num, page);
+	}
+	while(1){}
 
 	put_str("i am here\n");
 	switch_to_user_mode();
@@ -64,11 +81,11 @@ void welcome(){
 
 
 void _task0(){
+	uint32_t *test = (uint32_t*)((0<<22) + (256<<12));
+	*test = 0x12345678;
+	printf("\n*test: %x\n", *test);
 	while(1){
-		uint32_t *test = (uint32_t*)((0<<22) + (256<<12));
-		*test = 0xffffffff;
-		uint32_t *test2 = (uint32_t*)(0x0000);
-		ASSERT(*test == *test2);
+
 	}
 }
 
