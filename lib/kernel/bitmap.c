@@ -18,12 +18,14 @@ uint8_t bitmap_status(BITMAP* bitmap, uint32_t bit_index){
     uint32_t index = bit_index / 8;
     uint32_t bit = bit_index % 8;
 
+    // printk("\nbt_index: %x, index: %x, bit: %x, res: %x, value: %x, mask: %x\n ", bit_index, index, bit, bitmap->bits[index] & (BIT_MASK << bit), bitmap->bits[index], BIT_MASK<<bit);
+
     return (bitmap->bits[index] & (BIT_MASK << bit)) ? BIT_OCCUPIED: BIT_FREE;
 }
 
 
 int32_t bitmap_malloc(BITMAP* bitmap, uint32_t bit_count){
-    ASSERT(bitmap->bits == 0x7c00);
+    ASSERT(bitmap->bits == 0x60000);
     ASSERT(bitmap != NULL && bitmap->bits != NULL);
 
     if(bit_count > bitmap->size || bit_count == 0){
@@ -31,7 +33,6 @@ int32_t bitmap_malloc(BITMAP* bitmap, uint32_t bit_count){
     }
     uint32_t bit_index = 0;
     uint32_t res = 0;
-
     while(bit_index < bitmap->size){
         if(bitmap_status(bitmap, bit_index) == BIT_OCCUPIED){
             bit_index++; 

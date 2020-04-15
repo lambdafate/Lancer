@@ -11,5 +11,7 @@ void put_int(int32_t num);
 void printk(int8_t *fmt, ...);
 void printf(int8_t *fmt, ...);
 
+// int -> chars
+uint32_t itoc(int8_t *buffer, uint32_t value);
 
 #endif

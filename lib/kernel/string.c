@@ -25,3 +25,18 @@ int8_t* strcpy(int8_t *dest, int8_t *src){
     *dest = '\0';
     return res;
 }
+
+int8_t* str_reverse(int8_t *dest){
+    uint32_t len = strlen(dest);
+    if(len < 2){
+        return dest;
+    }
+    int8_t *p = dest;
+    int8_t *q = dest + len - 1;
+    while(p < q){
+        int8_t temp = *p;
+        *p++ = *q;
+        *q-- = temp;
+    }
+    return dest;
+}
