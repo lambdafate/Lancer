@@ -37,16 +37,15 @@ void* pmalloc(){
 // malloc a 4k virtual page by searching pdt and pet.
 void* vmalloc(){
     page_table_t *pdt = get_pdt();
-    uint32_t pdt_index = 0, pet_index = 0;
-    for(; pdt_index < 768; pdt_index++){    // 768(and above is system own)
+    for(uint32_t pdt_index = 0; pdt_index < 768; pdt_index++){    // 768(and above is system own)
         if(pdt->pages[pdt_index].present == 0){
             void *linear = get_page_chunk(pdt_index, 0);
-            uint32_t just_page_fault = *((uint32_t*)linear);
+            // uint32_t just_page_fault = *((uint32_t*)linear);
             printk("\n****fuck********\n");
             return linear;
         }
         page_table_t *pet = get_pet(pdt_index);
-        for(pet_index = 0; pet_index < 1024; pet_index++){
+        for(uint32_t pet_index = 0; pet_index < 1024; pet_index++){
             if(pet->pages[pet_index].present == 1){
                 continue;
             }
@@ -54,7 +53,7 @@ void* vmalloc(){
             // we find it.
             void *linear = get_page_chunk(pdt_index, pet_index);
             printk("begin page-fault.\n");
-            uint32_t just_page_fault = *((uint32_t*)linear);
+            // uint32_t just_page_fault = *((uint32_t*)linear);
             printk("\npage-fault finish\n");
             return linear;
         }

@@ -53,7 +53,7 @@ int main(){
 	tasks[0].stackframe.esp = (uint32_t*)((768<<22)+(0<<12)); 
 	tasks[0].ticks = tasks[0].priority = 10;
 
-
+	printk("scan-keyboard-input init over\n");
 	run_new_task("test-task", _task0, TASK_RING3);     
 	tasks[1].stackframe.esp = (uint32_t*)((20<<22) + (10<<12)); 
 	tasks[1].ticks = tasks[1].priority = 5;

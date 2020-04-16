@@ -78,15 +78,10 @@ void handler_page_fault(uint8_t vector){
 // init (user mode)task's pdt, it will be load to cr3 register
 int32_t set_task_pdt(TASK *task){
     page_table_t *pdt_curr = get_pdt();
-    printk("\nset_task_pdt: %x\n", pdt_curr);
     page_table_t *pdt_task = (page_table_t*)vmalloc();
 
     printk("\nset_task_pdt: %x\n", pdt_task);
-    while (1)
-    {
-        /* code */
-    }
-    
+    uint32_t just_page_fault = *((uint32_t*)(pdt_task));
 
     // init task's pdt.
     for(uint32_t pdt_index = 0; pdt_index < 1024; pdt_index++){
