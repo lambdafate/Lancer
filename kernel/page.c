@@ -1,26 +1,29 @@
 #include "stdint.h"
 #include "page.h"
-#include "schedule.h"
 #include "print.h"
 #include "debug.h"
 #include "malloc.h"
 #include "string.h"
+#include "schedule.h"
 
-static uint32_t get_pdt_index(void *linear);
-static uint32_t get_pet_index(void *linear);
-static void init_page(page_t* page, uint8_t _rw, uint8_t _us, void* linear);
-static void init_default_page(page_t *page, void* linear);
+uint32_t get_pdt_index(void *linear);
+uint32_t get_pet_index(void *linear);
+void init_page(page_t* page, uint8_t _rw, uint8_t _us, void* linear);
+void init_default_page(page_t *page, void* linear);
+static void init_page_from_page(page_t *new_page, page_t *old_page);
 
-static void* get_page_chunk(uint32_t pdt_index, uint32_t pet_index);
-static page_table_t* get_pdt();
-static page_table_t* get_pet(uint32_t pdt_index);
+void* get_page_chunk(uint32_t pdt_index, uint32_t pet_index);
+page_table_t* get_pdt();
+page_table_t* get_pet(uint32_t pdt_index);
+
 
 
 void handler_page_fault(uint8_t vector){
     void *linear = NULL;
     asm volatile("movl %%cr2, %%eax":"=a"(linear));
 
-    printk("\npage fault happens!\n");
+    printk("\ncurrent-task: %s\n", current_task->name);
+    printk("page fault happens!\n");
     printk("cause linear address: ");
     put_hex(linear);
     printk("  error code: ");
@@ -28,13 +31,22 @@ void handler_page_fault(uint8_t vector){
     printk("\n");
 
     page_table_t *pdt = get_pdt();
-    // page_table_t *pdt = (page_table_t*)((1023 << 22) + (1023 << 12));
     uint32_t pdt_index = get_pdt_index(linear);
-
+    uint32_t pet_index = get_pet_index(linear);
+    if(pdt_index == 1023){
+        pdt_index = pet_index;
+        ASSERT(pdt->pages[pdt_index].present == 0);
+    }
     page_table_t *pet = get_pet(pdt_index);
-    void *frame = pmalloc();
 
+    void *frame = pmalloc();
+    printk("\npdt_index: %x\n", pdt_index);
+    
     if(pdt->pages[pdt_index].present == 0){
+        // if(pdt_index == 1023){
+        //     pdt_index = get_pet_index(linear);
+        //     pet = get_pet(pdt_index);
+        // }
         printk("no page entry table present in page dir table!\n");
         // void *frame = pmalloc();
         init_default_page(&pdt->pages[pdt_index], frame);
@@ -45,11 +57,11 @@ void handler_page_fault(uint8_t vector){
         // pdt->pages[pdt_index].us      = 1;
         // pdt->pages[pdt_index].frame_address = (uint32_t)pmalloc() >> 12;
         // memory_set((void*)((1023<<22) + (pdt_index<<12)), PAGE_SIZE, 0);
-    }else{
+    }else if(pet->pages[pet_index].present == 0){
         printk("no 4k page present in page entry table. i will find one!\n");
         // page_table_t *pet = (page_table_t*)((1023 << 22) + (pdt_index << 12));
     
-        uint32_t pet_index = get_pet_index(linear);
+        // uint32_t pet_index = get_pet_index(linear);
         
         init_default_page(&pet->pages[pet_index], frame);
 
@@ -63,20 +75,53 @@ void handler_page_fault(uint8_t vector){
     // while(1){}
 }
 
+// init (user mode)task's pdt, it will be load to cr3 register
+int32_t set_task_pdt(TASK *task){
+    page_table_t *pdt_curr = get_pdt();
+    printk("\nset_task_pdt: %x\n", pdt_curr);
+    page_table_t *pdt_task = (page_table_t*)vmalloc();
 
-static uint32_t get_pdt_index(void *linear){
+    printk("\nset_task_pdt: %x\n", pdt_task);
+    while (1)
+    {
+        /* code */
+    }
+    
+
+    // init task's pdt.
+    for(uint32_t pdt_index = 0; pdt_index < 1024; pdt_index++){
+        if(pdt_index < 768){
+            pdt_task->pages[pdt_index].present = 0;
+            continue;
+        }
+        init_page_from_page(&pdt_task->pages[pdt_index], &pdt_curr->pages[pdt_index]);
+    }
+    // set 1023(=pdt_index) to task self's pdt.
+    uint32_t pdt_index = get_pdt_index(pdt_task);
+    uint32_t pet_index = get_pet_index(pdt_task);
+    page_table_t *pet = get_pet(pdt_index);
+    pdt_task->pages[1023].frame_address = pet->pages[pet_index].frame_address;
+    task->pdt = (uint32_t)(pet->pages[pet_index].frame_address << 12);
+    return 1;
+}
+  
+
+
+uint32_t get_pdt_index(void *linear){
     ASSERT(linear >=0 && linear <= 0xffffffff);
     uint32_t index = (uint32_t)(linear) >> 22;
     return index;
 }
 
-static uint32_t get_pet_index(void *linear){
+uint32_t get_pet_index(void *linear){
     ASSERT(linear >= 0 && linear <= 0xffffffff);
     uint32_t index = ((uint32_t)(linear) >> 12) & 0x003ff;
     return index;
 }
 
-static void init_page(page_t* page, uint8_t _rw, uint8_t _us, void* frame){
+
+
+void init_page(page_t* page, uint8_t _rw, uint8_t _us, void* frame){
     ASSERT(_rw == 0 || _rw == 1);
     ASSERT(_us == 0 || _us == 1);
 
@@ -89,26 +134,45 @@ static void init_page(page_t* page, uint8_t _rw, uint8_t _us, void* frame){
     page->unused   = 0;
     page->frame_address = (uint32_t)frame >> 12;
 }
-static void init_default_page(page_t *page, void* frame){
+void init_default_page(page_t *page, void* frame){
     init_page(page, 1, 1, frame);
 }
 
-static void* get_page_chunk(uint32_t pdt_index, uint32_t pet_index){
+static void init_page_from_page(page_t *new_page, page_t *old_page){
+    new_page->present = old_page->present;
+    new_page->rw      = old_page->rw;
+    new_page->us      = old_page->us;
+    new_page->reserved= old_page->reserved;
+    new_page->accessed= old_page->accessed;
+    new_page->dirty   = old_page->dirty;
+    new_page->unused  = old_page->unused;
+    new_page->frame_address = old_page->frame_address;
+}
+
+
+
+
+void* get_page_chunk(uint32_t pdt_index, uint32_t pet_index){
     ASSERT(pdt_index >= 0 && pdt_index < 1024);
     ASSERT(pet_index >= 0 && pet_index < 1024);
 
     return (void*)((pdt_index << 22) + (pet_index << 12)); 
 }
 
-static page_table_t* get_pdt(){
+page_table_t* get_pdt(){
     page_table_t *pdt = get_page_chunk(1023, 1023);
     return pdt;
 }
 
-static page_table_t* get_pet(uint32_t pdt_index){
+page_table_t* get_pet(uint32_t pdt_index){
+    page_table_t *pdt = get_pdt();
+    // ASSERT(pdt->pages[pdt_index].present == 1);
     page_table_t *pet = get_page_chunk(1023, pdt_index);
     return pet;
 }
+
+
+
 
 
 // just for a test

@@ -82,9 +82,11 @@ static void handler_cpu_inside(uint8_t verctor){
     put_int(verctor);
     put_str(" -- ");
     put_str(interrupt_info[verctor]);
-    put_char('\n');
+    // put_char('\n');
+    for(int i=0; i<1000000; i++){
     for(int i=0; i<1000000; i++){
 
+	}
 	}
 }
 

@@ -50,12 +50,13 @@ int main(){
 
 	// run keyboard scan task
 	run_new_task("scan-keyboard-input", task_keyboard, TASK_RING3);     
-	tasks[0].stackframe.esp = 0x6000; 
+	tasks[0].stackframe.esp = (uint32_t*)((768<<22)+(0<<12)); 
 	tasks[0].ticks = tasks[0].priority = 10;
-	
+
+
 	run_new_task("test-task", _task0, TASK_RING3);     
-	tasks[0].stackframe.esp = 0x3000; 
-	tasks[0].ticks = tasks[0].priority = 5;
+	tasks[1].stackframe.esp = (uint32_t*)((20<<22) + (10<<12)); 
+	tasks[1].ticks = tasks[1].priority = 5;
 
 
 	// int num = 10;
@@ -63,7 +64,7 @@ int main(){
 	// 	void *page = pmalloc();
 	// 	printk("%x:  %x\n", num, page);
 	// }
-	// while(1){}
+	while(1){}
 
 	put_str("i am here\n");
 	switch_to_user_mode();
@@ -81,12 +82,12 @@ void welcome(){
 
 
 void _task0(){
-	uint32_t *test = (uint32_t*)((0<<22) + (256<<12));
-	*test = 0x12345678;
-	printf("\n*test: %x test: %x\n", *test, test);
-	test = (uint32_t*)((1<<22) + (256<<12) + 0x123);
-	*test = 0x12345678;
-	printf("\n*test: %x test: %x\n", *test, test);
+	// uint32_t *test = (uint32_t*)((0<<22) + (256<<12));
+	// *test = 0x12345678;
+	// printf("\n*test: %x test: %x\n", *test, test);
+	// test = (uint32_t*)((1<<22) + (256<<12) + 0x123);
+	// *test = 0x12345678;
+	// printf("\n*test: %x test: %x\n", *test, test);
 	while(1){
 
 	}

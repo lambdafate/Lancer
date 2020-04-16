@@ -1,12 +1,13 @@
 #include "stdint.h"
 #include "schedule.h"
+#include "page.h"
 #include "global.h"
 #include "string.h"
 #include "debug.h"
 
 void init_tasks();
 void init_stackframe(STACKFRAME *stackframe, void *eip, void *esp, uint8_t ring);
-int8_t run_new_task(uint8_t *task_name, void *func, uint8_t ring);
+int32_t run_new_task(uint8_t *task_name, void *func, uint8_t ring);
 
 TASK* schedule_priority();
 TASK* schedule_time_ticks();
@@ -104,9 +105,7 @@ void switch_to(TASK *curr_task, TASK *new_task){
 
 
 
-int8_t run_new_task(uint8_t *task_name, void *func, uint8_t ring){
-	ASSERT(ring == TASK_RING0 || ring == TASK_RING3);
-
+int32_t run_new_task(uint8_t *task_name, void *func, uint8_t ring){
 	TASK *temp = 0;
 	for (uint32_t i = 0; i < TASK_MAX_NUM; i++){
 		if(tasks[i].status == TASK_DIED){
@@ -119,26 +118,19 @@ int8_t run_new_task(uint8_t *task_name, void *func, uint8_t ring){
 	}
 
 	temp->status = TASK_READY;
-	init_stackframe(&temp->stackframe, func, 0x1000, ring);
+	init_stackframe(&temp->stackframe, func, ((768<<22)+(0<<12)), ring);
 	// set task name
 	strcpy(temp->name, task_name);
 	// change current_task
-	current_task =temp;
+	current_task = temp;
+	// set task pdt(will be loaded to CR3)
+	set_task_pdt(current_task);
 	return 1;
 }
 
 void switch_to_user_mode(){
 	ASSERT(current_task != NULL);
-	// ASSERT(current_task == tasks);
 
-	// TASK *t0 = (TASK*)0x00001000;
-
-	// current_task = t0;
-
-	// memory_set(t0, 4096, 0);
-	// init_stackframe_with_user_mode(&t0->stackframe, _task0, (void*)t0+0x1000);
-
-	// write_tss((uint32_t)(t0)+sizeof(STACKFRAME));
 	current_task->status = TASK_RUNNING;
 	write_tss((uint32_t)current_task + sizeof(STACKFRAME));
 	uint32_t _position = (uint32_t)current_task + 0x20;
@@ -162,7 +154,7 @@ void init_tasks(){
 		tasks[i].ticks = TASK_TICKS;
 		tasks[i].priority = TASK_PRIORITY;
 		tasks[i].run_ticks = 0;
-		tasks[i].r3		= 0;
+		tasks[i].pdt	= 0;
 		tasks[i].next	= 0;
 		strcpy(tasks[i].name, init_name);
 	}

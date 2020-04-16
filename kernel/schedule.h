@@ -26,12 +26,12 @@ typedef struct{
 
 typedef struct _task{
     STACKFRAME stackframe;
+    uint32_t pdt;                           // page dir table address.
     int32_t pid;
     uint8_t status;
     int32_t ticks;
     int32_t priority;
     uint32_t run_ticks;
-    uint32_t r3;
     int8_t name[PCB_NAME_SIZE];
     struct _task *next;
 }TASK;
@@ -44,6 +44,6 @@ void switch_to_user_mode();
 void schedule();
 void switch_to(TASK *curr_task, TASK *new_task);
 void init_stackframe(STACKFRAME *stackframe, void *eip, void *esp, uint8_t ring);
-int8_t run_new_task(uint8_t *task_name, void *func, uint8_t ring);
+int32_t run_new_task(uint8_t *task_name, void *func, uint8_t ring);
 
 #endif
