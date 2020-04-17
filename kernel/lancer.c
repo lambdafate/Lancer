@@ -32,9 +32,10 @@ int main(){
 	welcome();
 	lancer_init();
 
-	// printk("%s, %d,  %x\n", "test", 12, 0xa00000);
+	// uint32_t *test_p = (uint32_t*)((768<<22)-4);
+	// *test_p = 0x12345;
+	// printk("test page fault: %x\n", *test_p);
 	// while(1){}
-	 
 
 	// show_page_map();
 
@@ -44,26 +45,16 @@ int main(){
 
 	// run keyboard scan task
 	run_new_task("scan-keyboard-input", task_keyboard, TASK_RING3);     
-	tasks[0].stackframe.esp = (uint32_t*)((768<<22)+(0<<12)); 
+	tasks[0].stackframe.esp = (uint32_t*)((0xc0003000)); 
 	tasks[0].ticks = tasks[0].priority = 10;
+
+	// asm volatile("movl %0, %%cr3"::"a"(tasks[0].pdt));
 
 	// printk("scan-keyboard-input init over\n");
 	// run_new_task("test-task", _task0, TASK_RING3);     
 	// tasks[1].stackframe.esp = (uint32_t*)((768<<22) + (0<<12)); 
 	// tasks[1].ticks = tasks[1].priority = 5;
 
-	// uint32_t *test = (uint32_t*)((0<<22)+(256<<12));
-	// printk("for test: %x\n", *test);
-	// while (1){
-	// 	/* code */
-	// }
-
-	// int num = 10;
-	// while(num--){
-	// 	void *page = pmalloc();
-	// 	printk("%x:  %x\n", num, page);
-	// }
-	// while(1){}
 
 	put_str("i am here\n");
 	switch_to_user_mode();

@@ -79,24 +79,25 @@ void handler_page_fault(uint8_t vector){
 int32_t set_task_pdt(TASK *task){
     page_table_t *pdt_curr = get_pdt();
     page_table_t *pdt_task = (page_table_t*)vmalloc();
-
-    printk("\nset_task_pdt: %x\n", pdt_task);
     uint32_t just_page_fault = *((uint32_t*)(pdt_task));
-    printk("*********set_task_pdt**********\n");
+    
     // init task's pdt.
-    for(uint32_t pdt_index = 0; pdt_index < 1024; pdt_index++){
-        if(pdt_index < 768){
-            pdt_task->pages[pdt_index].present = 0;
-            continue;
-        }
-        init_page_from_page(&pdt_task->pages[pdt_index], &pdt_curr->pages[pdt_index]);
-    }
+    memory_set((void*)pdt_task, PAGE_SIZE, 0);
+    init_page_from_page(&pdt_task->pages[768], &pdt_curr->pages[768]);
+    pdt_task->pages[1023].present = 1;
+    // for(uint32_t pdt_index = 0; pdt_index < 1024; pdt_index++){
+    //     if(pdt_index < 768){
+    //         pdt_task->pages[pdt_index].present = 0;
+    //         continue;
+    //     }
+    //     init_page_from_page(&pdt_task->pages[pdt_index], &pdt_curr->pages[pdt_index]);
+    // }
     // set 1023(=pdt_index) to task self's pdt.
     uint32_t pdt_index = get_pdt_index(pdt_task);
     uint32_t pet_index = get_pet_index(pdt_task);
     page_table_t *pet = get_pet(pdt_index);
     pdt_task->pages[1023].frame_address = pet->pages[pet_index].frame_address;
-    task->pdt = (uint32_t)(pet->pages[pet_index].frame_address << 12);
+    task->pdt = (uint32_t)((uint32_t)(pet->pages[pet_index].frame_address) << 12);
     return 1;
 }
   

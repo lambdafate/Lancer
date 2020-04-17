@@ -125,6 +125,7 @@ int32_t run_new_task(uint8_t *task_name, void *func, uint8_t ring){
 	current_task = temp;
 	// set task pdt(will be loaded to CR3)
 	set_task_pdt(current_task);
+	printk("run_new_task pdt: %x\n", current_task->pdt);
 	return 1;
 }
 
@@ -135,13 +136,14 @@ void switch_to_user_mode(){
 	write_tss((uint32_t)current_task + sizeof(STACKFRAME));
 	uint32_t _position = (uint32_t)current_task + 0x20;
 	asm volatile("cli;\
+				movl %1, %%cr3;\
 				movl %0, %%esp;\
 				popl %%fs;\
 				popl %%gs;\
 				popl %%es;\
 				popl %%ds;\
 				add $4, %%esp;\
-				iret"::"a"(_position));
+				iret"::"a"(_position), "b"(current_task->pdt));
 }
 
 

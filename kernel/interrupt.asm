@@ -76,7 +76,7 @@ interrupt_handler_entry%1:
     push gs
     push fs
     pushad
-    
+
     mov esp, 0x80000
     ; push %1
     call [interrupt_handler_table + %1*4]
