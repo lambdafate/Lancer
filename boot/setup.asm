@@ -223,6 +223,8 @@ flushpage:
 
     call kernel_init            ; init kernel, prepare for leaving setup and jmping to kernel
     
+    add esp, 0xc0000000
+    
     jmp eax     ; jmp to kernel, eax->e_entry
 
 
