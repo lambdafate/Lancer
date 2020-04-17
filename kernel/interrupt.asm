@@ -25,14 +25,25 @@ interrupt_handler_entry%1:
     push es
     push gs
     push fs
-    pushad
+    pushad          
     
+    mov eax, [ss:esp+14*4]    ; cs in stack
+    and eax, 0x00000003       ; check cs's CPL
+    cmp eax, 3
+    je user_interrupt%1
+    push %1
+    call [interrupt_handler_table + %1*4]
+    add esp, 4
+    jmp handler_finish%1
+
+user_interrupt%1:
     mov esp, 0x80000
     push %1
     call [interrupt_handler_table + %1*4]
     add esp, 4
     mov esp, [current_task]
 
+handler_finish%1:
     mov al, 0x20
     out 0xa0, al
     out 0x20, al

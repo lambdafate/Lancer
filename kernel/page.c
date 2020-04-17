@@ -40,7 +40,7 @@ void handler_page_fault(uint8_t vector){
     page_table_t *pet = get_pet(pdt_index);
 
     void *frame = pmalloc();
-    printk("\npdt_index: %x\n", pdt_index);
+    printk("pdt_index: %x, pet_index: %x\n", pdt_index, pet_index);
     
     if(pdt->pages[pdt_index].present == 0){
         // if(pdt_index == 1023){
@@ -82,7 +82,7 @@ int32_t set_task_pdt(TASK *task){
 
     printk("\nset_task_pdt: %x\n", pdt_task);
     uint32_t just_page_fault = *((uint32_t*)(pdt_task));
-
+    printk("*********set_task_pdt**********\n");
     // init task's pdt.
     for(uint32_t pdt_index = 0; pdt_index < 1024; pdt_index++){
         if(pdt_index < 768){
