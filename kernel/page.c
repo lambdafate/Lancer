@@ -43,36 +43,16 @@ void handler_page_fault(uint8_t vector){
     printk("pdt_index: %x, pet_index: %x\n", pdt_index, pet_index);
     
     if(pdt->pages[pdt_index].present == 0){
-        // if(pdt_index == 1023){
-        //     pdt_index = get_pet_index(linear);
-        //     pet = get_pet(pdt_index);
-        // }
         printk("no page entry table present in page dir table!\n");
-        // void *frame = pmalloc();
         init_default_page(&pdt->pages[pdt_index], frame);
         memory_set((void*)(pet), PAGE_SIZE, 0);
-
-        // pdt->pages[pdt_index].present = 1;
-        // pdt->pages[pdt_index].rw      = 1;
-        // pdt->pages[pdt_index].us      = 1;
-        // pdt->pages[pdt_index].frame_address = (uint32_t)pmalloc() >> 12;
-        // memory_set((void*)((1023<<22) + (pdt_index<<12)), PAGE_SIZE, 0);
     }else if(pet->pages[pet_index].present == 0){
         printk("no 4k page present in page entry table. i will find one!\n");
-        // page_table_t *pet = (page_table_t*)((1023 << 22) + (pdt_index << 12));
     
-        // uint32_t pet_index = get_pet_index(linear);
-        
         init_default_page(&pet->pages[pet_index], frame);
 
-        // pet->pages[pet_index].present = 1;
-        // pet->pages[pet_index].rw      = 1;
-        // pet->pages[pet_index].us      = 1;
-        // pet->pages[pet_index].frame_address = (uint32_t)pmalloc() >> 12;
-        // printk("malloc page address: %x\n", pet->pages[pet_index].frame_address<<12);
     }
     printk("malloc page address: %x\n", frame);
-    // while(1){}
 }
 
 // init (user mode)task's pdt, it will be load to cr3 register
@@ -81,10 +61,6 @@ int32_t set_task_pdt(TASK *task){
     page_table_t *pdt_task = (page_table_t*)kmalloc();
     uint32_t just_page_fault = *((uint32_t*)(pdt_task));
     
-    // init task's pdt.
-    // memory_set((void*)pdt_task, PAGE_SIZE, 0);
-    // init_page_from_page(&pdt_task->pages[768], &pdt_curr->pages[768]);
-    // pdt_task->pages[1023].present = 1;
     for(uint32_t pdt_index = 0; pdt_index < 1024; pdt_index++){
         if(pdt_index > 0 && pdt_index < 768){
             pdt_task->pages[pdt_index].present = 0;
@@ -92,7 +68,7 @@ int32_t set_task_pdt(TASK *task){
         }
         init_page_from_page(&pdt_task->pages[pdt_index], &pdt_curr->pages[pdt_index]);
     }
-    // pdt_task->pages[0].present = 0;
+    
     // set 1023(=pdt_index) to task self's pdt.
     uint32_t pdt_index = get_pdt_index(pdt_task);
     uint32_t pet_index = get_pet_index(pdt_task);

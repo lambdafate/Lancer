@@ -43,7 +43,7 @@ void schedule_init();
 void switch_to_user_mode();
 void schedule();
 void switch_to(TASK *curr_task, TASK *new_task);
-void init_stackframe(STACKFRAME *stackframe, void *eip, void *esp, uint8_t ring);
-int32_t run_new_task(uint8_t *task_name, void *func, uint8_t ring);
+void init_stackframe(STACKFRAME *stackframe, void *eip, void *esp);
+int32_t run_new_task(uint8_t *task_name, void *func);
 
 #endif

@@ -32,27 +32,8 @@ int main(){
 	welcome();
 	lancer_init();
 
-	// uint32_t *test_p = (uint32_t*)((768<<22)-4);
-	// *test_p = 0x12345;
-	// printk("test page fault: %x\n", *test_p);
-	// while(1){}
-
-	// show_page_map();
-
-	// run_new_task("A--", _task0);     
-	// tasks[0].stackframe.esp = 0x1000; 
-	// tasks[0].ticks = tasks[0].priority = 200;
-
-	// run keyboard scan task
-	run_new_task("scan-keyboard-input", task_keyboard, TASK_RING3);     
-	tasks[0].stackframe.esp = (uint32_t*)((768 << 22) + ((0 << 12))); 
-	tasks[0].ticks = tasks[0].priority = 10;
-
-	// printk("scan-keyboard-input init over\n");
-	run_new_task("test-task", _task0, TASK_RING3);     
-	tasks[1].stackframe.esp = (uint32_t*)((768<<22) + (0<<12)); 
-	tasks[1].ticks = tasks[1].priority = 5;
-
+	run_new_task("scan-keyboard-input", task_keyboard);     
+	run_new_task("test-task", _task0);     
 
 	put_str("i am here\n");
 	switch_to_user_mode();
@@ -71,12 +52,6 @@ void welcome(){
 
 void _task0(){
 	while(1){
-		printf("task0...\n");
-		uint32_t num = 100;
-		while (num--)
-		{
-			delay(100);
-		}
 		
 	}
 }

@@ -6,8 +6,8 @@
 #include "debug.h"
 
 void init_tasks();
-void init_stackframe(STACKFRAME *stackframe, void *eip, void *esp, uint8_t ring);
-int32_t run_new_task(uint8_t *task_name, void *func, uint8_t ring);
+void init_stackframe(STACKFRAME *stackframe, void *eip, void *esp);
+int32_t run_new_task(uint8_t *task_name, void *func);
 
 TASK* schedule_priority();
 TASK* schedule_time_ticks();
@@ -54,22 +54,7 @@ TASK* schedule_priority(){
 		if(new_task != NULL){
 			return new_task;
 		}
-		/*
-		put_str("    ********************************    \n");
-		for (uint32_t i = 0; i < TASK_MAX_NUM; i++){
-			if(tasks[i].status == TASK_READY || tasks[i].status == TASK_RUNNING){
-				put_str(tasks[i].name);
-				put_str(" -------  ticks: ");
-				put_int(tasks[i].ticks);
-				put_str(" -------  priority: ");
-				put_int(tasks[i].priority);
-				put_str(" -------  run_ticks: ");
-				put_int(tasks[i].run_ticks);
-				put_str("\n");
-			}
-		}
-		asm volatile("cli; hlt");
-		*/
+
 		for (uint32_t i = 0; i < TASK_MAX_NUM; i++){
 			if(tasks[i].status == TASK_READY || tasks[i].status == TASK_RUNNING){
 				tasks[i].ticks = tasks[i].priority;
@@ -105,7 +90,7 @@ void switch_to(TASK *curr_task, TASK *new_task){
 
 
 
-int32_t run_new_task(uint8_t *task_name, void *func, uint8_t ring){
+int32_t run_new_task(uint8_t *task_name, void *func){
 	TASK *temp = 0;
 	for (uint32_t i = 0; i < TASK_MAX_NUM; i++){
 		if(tasks[i].status == TASK_DIED){
@@ -118,14 +103,17 @@ int32_t run_new_task(uint8_t *task_name, void *func, uint8_t ring){
 	}
 
 	temp->status = TASK_READY;
-	init_stackframe(&temp->stackframe, func, ((768<<22)+(0<<12)), ring);
+	init_stackframe(&temp->stackframe, func, ((768<<22)+(0<<12)));
+	temp->ticks = TASK_TICKS;
+	temp->priority = TASK_PRIORITY;
+
 	// set task name
 	strcpy(temp->name, task_name);
 	// change current_task
 	current_task = temp;
 	// set task pdt(will be loaded to CR3)
 	set_task_pdt(current_task);
-	printk("run_new_task pdt: %x\n", current_task->pdt);
+
 	return 1;
 }
 
@@ -150,7 +138,7 @@ void switch_to_user_mode(){
 void init_tasks(){
 	uint8_t* init_name = "you should't see it.";
 	for (uint32_t i = 0; i < TASK_MAX_NUM; i++){
-		init_stackframe(&tasks[i].stackframe, 0, 0, TASK_RING3);		
+		init_stackframe(&tasks[i].stackframe, 0, 0);		
 		tasks[i].pid = -1;
 		tasks[i].status = TASK_DIED;
 		tasks[i].ticks = TASK_TICKS;
@@ -166,33 +154,16 @@ void init_tasks(){
 
 
 // eip: target func address, where you will run begin.
-void init_stackframe(STACKFRAME *stackframe, void *eip, void *esp, uint8_t ring){
-	ASSERT(ring == TASK_RING3);
+void init_stackframe(STACKFRAME *stackframe, void *eip, void *esp){
 
-	if(ring == TASK_RING3){
-		stackframe->fs = GDT_SELECTOR_USER_DATA;
-		stackframe->gs = GDT_SELECTOR_USER_DATA;
-		stackframe->es = GDT_SELECTOR_USER_DATA;
-		stackframe->ds = GDT_SELECTOR_USER_DATA;
+	stackframe->fs = GDT_SELECTOR_USER_DATA;
+	stackframe->gs = GDT_SELECTOR_USER_DATA;
+	stackframe->es = GDT_SELECTOR_USER_DATA;
+	stackframe->ds = GDT_SELECTOR_USER_DATA;
 
-		stackframe->ss = GDT_SELECTOR_USER_STACK;
-		stackframe->esp = esp;
-		stackframe->eflags = 0x0202;
-		stackframe->cs = GDT_SELECTOR_USER_CODE;
-		stackframe->eip = eip;
-
-		return;
-	}
-	/*
-	stackframe->fs = GDT_SELECTOR_KERNEL_SCREEN;
-	stackframe->gs = GDT_SELECTOR_KERNEL_SCREEN;
-	stackframe->es = GDT_SELECTOR_KERNEL_DATA;
-	stackframe->ds = GDT_SELECTOR_KERNEL_DATA;
-
-	stackframe->ss = GDT_SELECTOR_KERNEL_STACK;
-	stackframe->esp = (esp == NULL ? KERNEL_STACKTOP : esp);
+	stackframe->ss = GDT_SELECTOR_USER_STACK;
+	stackframe->esp = esp;
 	stackframe->eflags = 0x0202;
-	stackframe->cs = GDT_SELECTOR_KERNEL_CODE;
+	stackframe->cs = GDT_SELECTOR_USER_CODE;
 	stackframe->eip = eip;
-	*/
 }
