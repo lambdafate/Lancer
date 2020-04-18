@@ -211,7 +211,7 @@ flush:
 flushpage:
     mov ax, StackSelector
     mov ss, ax
-    mov esp, 0x80000
+    mov esp, 0xc0080000 
                                 ; init segment register before into kernel
     mov ax, DataSelector
     mov ds, ax  
@@ -222,8 +222,6 @@ flushpage:
     mov fs, ax
 
     call kernel_init            ; init kernel, prepare for leaving setup and jmping to kernel
-    
-    add esp, 0xc0000000
     
     jmp eax     ; jmp to kernel, eax->e_entry
 
@@ -239,6 +237,8 @@ reset_gdt:
     mov dword [ds:ebx+0x0c], 0x00cf9800
 
     add dword [ds:ebx+0x14], 0xc0000000     ; screen seg, base+0xc0000000
+
+    ; add dword [ds:ebx+0x1c], 0xc0000000     ; data seg
 
     ; add dword [ds:ebx+0x24], 0xc0000000     ; stack seg, base+0xc0000000
 

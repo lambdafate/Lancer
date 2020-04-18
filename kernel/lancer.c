@@ -48,7 +48,7 @@ int main(){
 	tasks[0].stackframe.esp = (uint32_t*)((0xc0003000)); 
 	tasks[0].ticks = tasks[0].priority = 10;
 
-	// asm volatile("movl %0, %%cr3"::"a"(tasks[0].pdt));
+	asm volatile("movl %0, %%cr3"::"a"(tasks[0].pdt));
 
 	// printk("scan-keyboard-input init over\n");
 	// run_new_task("test-task", _task0, TASK_RING3);     
