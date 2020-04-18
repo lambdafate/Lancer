@@ -95,10 +95,10 @@ void switch_to(TASK *curr_task, TASK *new_task){
 	}
 	curr_task->status = TASK_READY;
 	new_task->status  = TASK_RUNNING;
-	// maybe switch r3
-
 	current_task = new_task;
-	
+	// maybe switch r3
+	asm volatile("movl %0, %%cr3"::"a"(current_task->pdt));
+
 	// we must change tss's esp0 to current_task's stackframe when happen task switch. 
     write_tss((uint32_t)current_task + sizeof(STACKFRAME));
 }

@@ -18,4 +18,5 @@ void  memory_init();
 
 
 void* pmalloc();
+void* kmalloc();
 #endif

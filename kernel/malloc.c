@@ -34,6 +34,24 @@ void* pmalloc(){
     return page;
 }
 
+// it will molloc a 4K page(virtual) from kernel's first page table
+void* kmalloc(){
+    // page_table_t *pdt = get_pdt();
+    uint32_t pdt_index = 768;
+    page_table_t *pet = get_pet(pdt_index);
+    uint32_t pet_index = 256;   // 0~255 <=> 0~1MB
+    for (; pet_index < 1024; pet_index++){
+        if(pet->pages[pet_index].present == 0){
+            break;
+        }
+    }
+    ASSERT(pet_index != 1024);
+    return get_page_chunk(pdt_index, pet_index);
+}
+
+
+
+
 // malloc a 4k virtual page by searching pdt and pet.
 void* vmalloc(){
     page_table_t *pdt = get_pdt();

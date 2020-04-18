@@ -45,15 +45,13 @@ int main(){
 
 	// run keyboard scan task
 	run_new_task("scan-keyboard-input", task_keyboard, TASK_RING3);     
-	tasks[0].stackframe.esp = (uint32_t*)((0xc0003000)); 
+	tasks[0].stackframe.esp = (uint32_t*)((768 << 22) + ((0 << 12))); 
 	tasks[0].ticks = tasks[0].priority = 10;
 
-	asm volatile("movl %0, %%cr3"::"a"(tasks[0].pdt));
-
 	// printk("scan-keyboard-input init over\n");
-	// run_new_task("test-task", _task0, TASK_RING3);     
-	// tasks[1].stackframe.esp = (uint32_t*)((768<<22) + (0<<12)); 
-	// tasks[1].ticks = tasks[1].priority = 5;
+	run_new_task("test-task", _task0, TASK_RING3);     
+	tasks[1].stackframe.esp = (uint32_t*)((768<<22) + (0<<12)); 
+	tasks[1].ticks = tasks[1].priority = 5;
 
 
 	put_str("i am here\n");
@@ -72,14 +70,14 @@ void welcome(){
 
 
 void _task0(){
-	uint32_t *test = (uint32_t*)((0<<22) + (256<<12));
-	*test = 0x12345678;
-	printf("\n*test: %x test: %x\n", *test, test);
-	// test = (uint32_t*)((1<<22) + (256<<12) + 0x123);
-	// *test = 0x12345678;
-	// printf("\n*test: %x test: %x\n", *test, test);
 	while(1){
-
+		printf("task0...\n");
+		uint32_t num = 100;
+		while (num--)
+		{
+			delay(100);
+		}
+		
 	}
 }
 
