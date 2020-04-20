@@ -22,13 +22,13 @@ void handler_page_fault(uint8_t vector){
     void *linear = NULL;
     asm volatile("movl %%cr2, %%eax":"=a"(linear));
 
-    printk("\ncurrent-task: %s\n", current_task->name);
-    printk("page fault happens!\n");
-    printk("cause linear address: ");
-    put_hex(linear);
-    printk("  error code: ");
-    put_hex(current_task->stackframe.error_code);
-    printk("\n");
+    // printk("\ncurrent-task: %s\n", current_task->name);
+    // printk("page fault happens!\n");
+    // printk("cause linear address: ");
+    // put_hex(linear);
+    // printk("  error code: ");
+    // put_hex(current_task->stackframe.error_code);
+    // printk("\n");
 
     page_table_t *pdt = get_pdt();
     uint32_t pdt_index = get_pdt_index(linear);
@@ -40,19 +40,19 @@ void handler_page_fault(uint8_t vector){
     page_table_t *pet = get_pet(pdt_index);
 
     void *frame = pmalloc();
-    printk("pdt_index: %x, pet_index: %x\n", pdt_index, pet_index);
+    // printk("pdt_index: %x, pet_index: %x\n", pdt_index, pet_index);
     
     if(pdt->pages[pdt_index].present == 0){
-        printk("no page entry table present in page dir table!\n");
+        // printk("no page entry table present in page dir table!\n");
         init_default_page(&pdt->pages[pdt_index], frame);
         memory_set((void*)(pet), PAGE_SIZE, 0);
     }else if(pet->pages[pet_index].present == 0){
-        printk("no 4k page present in page entry table. i will find one!\n");
+        // printk("no 4k page present in page entry table. i will find one!\n");
     
         init_default_page(&pet->pages[pet_index], frame);
 
     }
-    printk("malloc page address: %x\n", frame);
+    // printk("malloc page address: %x\n", frame);
 }
 
 // init (user mode)task's pdt, it will be load to cr3 register

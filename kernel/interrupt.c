@@ -8,14 +8,14 @@
 #include "keyboard.h"
 #include "syscall.h"
 #include "page.h"
+#include "hd.h"
+
+#define IRQ0_CLOCK      11111110
+#define IRQ1_KEYBOARD   11111101
+#define IRQ2_SLAVE      11111011
+#define IRQ14_HARDDISK  10111111
 
 uint32_t clock_ticks = 0;
-
-uint8_t clock_flag  = 0;
-int32_t syscall_number = -1;
-void *syscall_arg1 = NULL;
-void *syscall_arg2 = NULL;
-void *syscall_arg3 = NULL;
 
 
 // sizeod(void*) = 4(in 32 cpu), so there can use void* or uint32_t
@@ -24,13 +24,21 @@ void* interrupt_handler_table[IDT_NUM];             // entrys[i] will call table
 char* interrupt_info[IDT_NUM];                      // recard each interrupt info
 gate_descriptor idt[IDT_NUM];                       // interrupt descriptor table
 
-
 static void init_pic();
 static void init_gate_descriptor();
 static void make_gate_descriptor(gate_descriptor* gate, uint8_t attribute, void* handler);
 static void init_handler_table();
 static void handler_cpu_inside(uint8_t verctor);
+void handler_clock();
+void handler_donothing();
 
+
+void* maskable_interrupt[16] = {
+    handler_clock,     handler_keyboard,  handler_donothing, handler_donothing,     // IRQ0~IRQ3
+    handler_donothing, handler_donothing, handler_donothing, handler_donothing,     // IRQ4~IRQ7
+    handler_donothing, handler_donothing, handler_donothing, handler_donothing,     // IRQ8~IRQ11
+    handler_donothing, handler_donothing, handler_harddisk,  handler_harddisk     // IRQ12~IRQ15
+};
 
 void handler_clock(){
     clock_ticks++;
@@ -41,6 +49,7 @@ void handler_clock(){
     // }
     schedule();
 }
+
 
 // init interrupt descriptor table
 void idt_init(){   
@@ -54,19 +63,24 @@ void idt_init(){
     put_str("\nidt_init-> lidt done...\n");
 }
 
+void handler_donothing(){
+    printk("do-nothing!\n");
+}
+
 
 static void init_handler_table(){
+    // 0~31 num is cpu inside interrupt
     for (uint32_t i = 0; i < 32; i++){
         interrupt_handler_table[i] = handler_cpu_inside;
         interrupt_info[i] = "unknown";
     }
     // page fault.
     interrupt_handler_table[14] = handler_page_fault;
-
-    // clock interrupt.
-    interrupt_handler_table[0x20] = handler_clock;
-    // keyboard interrupt.
-    interrupt_handler_table[0x21] = handler_keyboard;
+    
+    // 0x20~0x2f is maskable interrupt
+    for(uint32_t i = 0x20; i < 0x30; i++){
+        interrupt_handler_table[i] = maskable_interrupt[i-0x20]; 
+    }
 
     // syscall
     interrupt_handler_table[0x80] = handler_syscall;
@@ -84,28 +98,27 @@ static void handler_cpu_inside(uint8_t verctor){
     put_str(interrupt_info[verctor]);
     // put_char('\n');
     for(int i=0; i<1000000; i++){
-    for(int i=0; i<1000000; i++){
+        for(int i=0; i<1000000; i++){
 
-	}
+        }
 	}
 }
 
 
 // init idt[] according to interrupt_hander_table
 static void init_gate_descriptor(){
-    // init cpu inside interrupt
+    // init cpu inside interrupt 0~31
     for (int32_t i = 0; i < 32; i++){
         make_gate_descriptor(&idt[i], IDT_ATTRIBUTE_DPL0, interrupt_handler_entrys[i]);
     }
 
-    // init clock interrupt
-    make_gate_descriptor(&idt[0x20], IDT_ATTRIBUTE_DPL0, interrupt_handler_entrys[32]);
-
-    // init keyboard interrupt
-    make_gate_descriptor(&idt[0x21], IDT_ATTRIBUTE_DPL0, interrupt_handler_entrys[33]);
+    // init maskable interrupt 0x20~0x2f
+    for(uint32_t i = 0x20; i < 0x30; i++){
+        make_gate_descriptor(&idt[i], IDT_ATTRIBUTE_DPL0, interrupt_handler_entrys[i]);
+    }
 
     // init syscall interrupt
-    make_gate_descriptor(&idt[0x80], IDT_ATTRIBUTE_DPL3, interrupt_handler_entrys[34]);
+    make_gate_descriptor(&idt[0x80], IDT_ATTRIBUTE_DPL3, interrupt_handler_entrys[0x30]);
 }
 
 
@@ -124,8 +137,8 @@ static void init_pic(){
     outb(PIC_S_DATA, 0x01);
 
     // open master's IR0
-    outb(PIC_M_DATA, 0xff-3);
-    outb(PIC_S_DATA, 0xff);
+    outb(PIC_M_DATA, 0xff & IRQ0_CLOCK & IRQ1_KEYBOARD & IRQ2_SLAVE & 0);
+    outb(PIC_S_DATA, 0xff & IRQ14_HARDDISK & 0);
 }
 
 

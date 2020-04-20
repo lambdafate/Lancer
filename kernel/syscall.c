@@ -14,7 +14,7 @@
 #include "interrupt.h"
 #include "print.h"
 #include "debug.h"
-
+#include "io.h"
 
 
 void sys_write(int8_t *str){
@@ -27,6 +27,23 @@ uint32_t sys_get_ticks(){
 	return ticks;
 }
 
+void sys_hd_identify(){
+    outb(0x1f6, 0xA0);
+
+    outb(0x1f2, 0);
+    outb(0x1f3, 0);
+    outb(0x1f4, 0);
+    outb(0x1f5, 0);
+
+    outb(0x1f7, 0xec);
+    uint8_t status = inb(0x1f7);
+    if(status == 0){
+        printk("no disk drive.\n");
+        return;
+    }
+    
+    printk("int 0x80: identify\n");   
+}
 
 
 void handler_syscall(){
@@ -35,13 +52,17 @@ void handler_syscall(){
     asm volatile("":"=a"(syscall_numer), "=b"(arg1));
 
     ASSERT(syscall_numer < SYSCALL_NUMBER);
+    uint8_t temp;
 
     switch (syscall_numer){
-        case 0:
+        case SYSCALL_NUMBER_GET_TICKS:
             asm volatile(""::"a"(clock_ticks));
             return;
-        case 1:
+        case SYSCALL_NUMBER_WRITE:
             put_str((int8_t*)arg1);
+            return;
+        case SYSCALL_NUMBER_HD_IDENTIFY:
+            sys_hd_identify();
             return;
         default:
             break;

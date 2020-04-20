@@ -32,6 +32,9 @@ int main(){
 	welcome();
 	lancer_init();
 
+	uint8_t *hd_num = (uint8_t*)(0x475);
+	printk("hd num: %x\n", *hd_num); 
+
 	run_new_task("scan-keyboard-input", task_keyboard);     
 	run_new_task("test-task", _task0);     
 
@@ -51,8 +54,13 @@ void welcome(){
 
 
 void _task0(){
+	asm volatile("int $0x80"::"a"(SYSCALL_NUMBER_HD_IDENTIFY));
 	while(1){
-		
+		// printf("ticks: %x\n", get_ticks());
+		// int num = 100;
+		// while(num--){
+		// 	delay(100);
+		// }
 	}
 }
 

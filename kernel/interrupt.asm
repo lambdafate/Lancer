@@ -189,8 +189,23 @@ VECTOR 0x1f,ZERO
 
 ; user defined interrupt
 ; no args, no return. just general interrupt
-VECTOR_NOARGS 0x20,ZERO                             ; clock interrupt
-VECTOR_NOARGS 0x21,ZERO                             ; keyboard interrupt
+VECTOR_NOARGS 0x20,ZERO                             ; IRQ0 clock interrupt
+VECTOR_NOARGS 0x21,ZERO                             ; IRQ1 keyboard interrupt
+VECTOR_NOARGS 0x22,ZERO                             ; IRQ2 no used, connected with slave.
+VECTOR_NOARGS 0x23,ZERO                             ; IRQ3    
+VECTOR_NOARGS 0x24,ZERO                             ; IRQ4
+VECTOR_NOARGS 0x25,ZERO                             ; IRQ5
+VECTOR_NOARGS 0x26,ZERO                             ; IRQ6
+VECTOR_NOARGS 0x27,ZERO                             ; IRQ7
+
+VECTOR_NOARGS 0x28,ZERO                             ; IRQ8
+VECTOR_NOARGS 0x29,ZERO                             ; IRQ9
+VECTOR_NOARGS 0x2a,ZERO                             ; IRQ10
+VECTOR_NOARGS 0x2b,ZERO                             ; IRQ11
+VECTOR_NOARGS 0x2c,ZERO                             ; IRQ12
+VECTOR_NOARGS 0x2d,ZERO                             ; IRQ13
+VECTOR_NOARGS 0x2e,ZERO                             ; IRQ14
+VECTOR_NOARGS 0x2f,ZERO                             ; IRQ15
 
 ; user defined interrupt
 ; having args and return values.
