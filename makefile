@@ -16,7 +16,7 @@ LANCER_OBJECT	=  $(BUILDDIR)/lancer.o $(BUILDDIR)/interrupt_c.o \
 	$(BUILDDIR)/interrupt_asm.o $(BUILDDIR)/string.o $(BUILDDIR)/bitmap.o \
 	$(BUILDDIR)/malloc.o $(BUILDDIR)/schedule.o $(BUILDDIR)/global.o \
 	$(BUILDDIR)/keyboard.o $(BUILDDIR)/syscall.o $(BUILDDIR)/print_c.o \
-	$(BUILDDIR)/page.o
+	$(BUILDDIR)/page.o $(BUILDDIR)/hd.o
 
 
 # BOOT and SETUP
@@ -62,6 +62,8 @@ $(BUILDDIR)/print.o: ./lib/kernel/print.asm
 $(BUILDDIR)/timer.o: ./device/timer.c
 	$(GCCCompile) -c $^ -o $@
 $(BUILDDIR)/keyboard.o: ./device/keyboard.c
+	$(GCCCompile) -c $^ -o $@
+$(BUILDDIR)/hd.o: ./device/hd.c
 	$(GCCCompile) -c $^ -o $@
 
 
