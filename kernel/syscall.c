@@ -28,6 +28,33 @@ uint32_t sys_get_ticks(){
 	return ticks;
 }
 
+void test(){
+
+    uint8_t *buffer = (uint8_t*)(0x7c00);
+    strcpy(buffer, "there is buffer                           what the fuck!!!!\n");
+
+    // printk("first buffer: %s\n", buffer);
+
+	// sys_hd_identify();
+    printk("write buffer from 0x7c00: %s\n", buffer);
+    int32_t res = sata_write(2, 1, buffer);
+    if(res == -1){
+        printk("write error\n");
+    }
+
+    buffer = (uint8_t*)(0x7000);
+    printk("0x7000 before read: %s\n", buffer);
+	res = sata_read(2, 1, buffer);
+	if(res == -1){
+		printk("read error\n");
+	}
+
+    ASSERT(buffer == 0x7000);
+    printk("0x7000 after read: %s\n", buffer);
+    
+}
+
+
 
 void handler_syscall(){
     uint32_t syscall_numer = 0;
@@ -45,7 +72,7 @@ void handler_syscall(){
             put_str((int8_t*)arg1);
             return;
         case SYSCALL_NUMBER_HD_IDENTIFY:
-            sys_hd_identify();
+            test();
             return;
         default:
             break;

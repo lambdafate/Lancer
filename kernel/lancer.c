@@ -8,7 +8,7 @@
 #include "keyboard.h"
 #include "syscall.h"
 #include "page.h"
-
+#include "hd.h"
 
 void welcome();
 void _task0();
@@ -51,7 +51,10 @@ void welcome(){
 
 
 void _task0(){
+	
+	printf("%s\n", "task0");
 	asm volatile("int $0x80"::"a"(SYSCALL_NUMBER_HD_IDENTIFY));
+
 	while(1){
 		// printf("ticks: %x\n", get_ticks());
 		// int num = 100;

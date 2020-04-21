@@ -6,6 +6,10 @@ static inline void outb(uint16_t port, uint8_t data){
     asm volatile ("outb  %b0, %w1": : "a"(data), "Nd"(port));
 } 
 
+static inline void outw(uint16_t port, uint16_t data){
+    asm volatile ("outw  %%ax, %w1": : "a"(data), "Nd"(port));
+} 
+
 static inline void outsw(uint16_t port, const void* addr, uint32_t count){
     asm volatile ("cld; rep outsw": "+S"(addr), "+c"(count): "d"(port));
 }
