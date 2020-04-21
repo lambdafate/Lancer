@@ -10,11 +10,6 @@
 #include "page.h"
 #include "hd.h"
 
-#define IRQ0_CLOCK      11111110
-#define IRQ1_KEYBOARD   11111101
-#define IRQ2_SLAVE      11111011
-#define IRQ14_HARDDISK  10111111
-
 uint32_t clock_ticks = 0;
 
 
@@ -137,10 +132,18 @@ static void init_pic(){
     outb(PIC_S_DATA, 0x01);
 
     // open master's IR0
-    outb(PIC_M_DATA, 0xff & IRQ0_CLOCK & IRQ1_KEYBOARD & IRQ2_SLAVE & 0);
-    outb(PIC_S_DATA, 0xff & IRQ14_HARDDISK & 0);
+    outb(PIC_M_DATA, 0xff);
+    outb(PIC_S_DATA, 0xff);
 }
 
+void enable_irq(uint8_t irq, uint8_t selector){
+    uint8_t port = PIC_M_DATA;
+    if(selector == IRQ_SLAVE){
+        port = PIC_S_DATA;
+    }
+    uint8_t old = inb(port);
+    outb(port, old & irq);
+}
 
 static void make_gate_descriptor(gate_descriptor* gate, uint8_t attribute, void* handler){
     gate->handler_low = ((uint32_t)handler & 0x0000ffff);

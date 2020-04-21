@@ -3,13 +3,18 @@
 #include "malloc.h"
 #include "schedule.h"
 #include "keyboard.h"
+#include "hd.h"
 
 void lancer_init(){
     idt_init();
+
     timer_init(PIT_HZ);
+
     memory_init();
     
     schedule_init();
 
-    kb_buffer_init();
+    kb_init();
+
+    hd_init();
 }

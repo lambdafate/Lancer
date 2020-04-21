@@ -12,6 +12,7 @@
 #include "syscall.h"
 #include "schedule.h"
 #include "interrupt.h"
+#include "hd.h"
 #include "print.h"
 #include "debug.h"
 #include "io.h"
@@ -25,24 +26,6 @@ uint32_t sys_get_ticks(){
     uint32_t ticks = 0;
 	asm volatile("int $0x80":"=a"(ticks):"a"(SYSCALL_NUMBER_GET_TICKS));
 	return ticks;
-}
-
-void sys_hd_identify(){
-    outb(0x1f6, 0xA0);
-
-    outb(0x1f2, 0);
-    outb(0x1f3, 0);
-    outb(0x1f4, 0);
-    outb(0x1f5, 0);
-
-    outb(0x1f7, 0xec);
-    uint8_t status = inb(0x1f7);
-    if(status == 0){
-        printk("no disk drive.\n");
-        return;
-    }
-    
-    printk("int 0x80: identify\n");   
 }
 
 
