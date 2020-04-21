@@ -3,6 +3,7 @@
 #include "io.h"
 #include "keyboard.h"
 #include "string.h"
+#include "interrupt.h"
 
 // 以下定义全部来自 <<操作系统真相还原>>: https://book.douban.com/subject/26745156/
 
@@ -132,11 +133,13 @@ void handler_keyboard(){
 }
 
 
-void kb_buffer_init(){
+void kb_init(){
     kb_buffer.head = 0;
     kb_buffer.tail = 0;
     kb_buffer.size = 0;
     memory_set(kb_buffer.buffer, KEYBOARD_BUFFER_SIZE, 0);
+
+    enable_irq(IRQ1_KEYBOARD, IRQ_MASTER);
 }
 
 

@@ -1,5 +1,6 @@
 #include "io.h"
 #include "stdint.h"
+#include "interrupt.h"
 
 #define PIT_CTRT_PORT       0x43
 #define PIT_DATA_PORT       0x40
@@ -21,4 +22,6 @@ void timer_init(uint32_t frequency){
 
     outb(PIT_DATA_PORT, l);
     outb(PIT_DATA_PORT, h);
+
+    enable_irq(IRQ0_CLOCK, IRQ_MASTER);
 }

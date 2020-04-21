@@ -13,7 +13,7 @@ typedef struct{
 
 
 void handler_keyboard();
-void kb_buffer_init();
+void kb_init();
 void task_keyboard();
 
 #endif
