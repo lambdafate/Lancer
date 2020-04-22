@@ -14,7 +14,7 @@
 #define HD_PORT_PRIMARY_CONTROL                 0x3f6
 
 
-#define DEVICE_LBA_MODE                         0
+#define DEVICE_LBA_MODE                         1
 #define DEVICE_DRV_MASTER                       0
 #define DEVICE_DRV_SLAVE                        1
 #define MAKE_DEVICE(lba, drv, hs)               (0xa0 | ((lba) << 6) | ((drv) << 4) | ((hs) & 0x0f))
@@ -25,13 +25,11 @@
 #define COMMAND_FLUSH                           0xe7
 
 // status register
-#define STATUS_BUSY                        10000000
-#define STATUS_READY                       01000000
-#define STATUS_DSC                         00010000
-#define STATUS_DRQ                         00001000
-#define STATUS_ERROR                       00000001
-
-
+#define STATUS_BUSY                             0b10000000
+#define STATUS_READY                            0b01000000
+#define STATUS_DSC                              0b00010000
+#define STATUS_DRQ                              0b00001000
+#define STATUS_ERROR                            0b00000001
 
 struct partition{
     uint32_t start_sector;
@@ -45,10 +43,28 @@ struct disk{
     struct partition logical_parts[8];
 };
 
+struct part{
+    uint32_t boot : 8;      // boot indicator, 0x80=bootable, 0=no bootable, else=illegal
+    uint32_t start_head : 8;
+    uint32_t start_sector : 6;
+    uint32_t start_sylinder : 10;
+    uint32_t part_type : 8;
+    uint32_t end_head : 8;
+    uint32_t end_sector : 6;
+    uint32_t end_sylinder : 10;
+    uint32_t sectors_offset : 32;
+    uint32_t sectors_count : 32;
+}__attribute((packed));
+
+
+
+struct part mbrparts[4];
 
 void hd_init();
 void handler_harddisk();
 void sys_hd_identify();
 int32_t sata_read(uint32_t begin_sector, uint8_t count, void *buffer);
 int32_t sata_write(uint32_t begin_sector, uint8_t sector_count, void *buffer);
+
+
 #endif

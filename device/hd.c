@@ -7,6 +7,7 @@
 #include "debug.h"
 
 struct disk sata0_master;
+// struct part mbrparts[4];
 
 void hd_init(){
     uint8_t *hd_num = (uint8_t*)(0x475);
@@ -54,7 +55,7 @@ void sys_hd_identify(){
         return;
     }
     printk("status register: %x\n", status);
-    while((status & STATUS_BUSY) && !(status & STATUS_DRQ) ){
+    while((status & STATUS_BUSY) || !(status & STATUS_DRQ) ){
         status = inb(HD_PORT_PRIMARY_STATUS_COMMAND);
     }
     if(status & STATUS_ERROR){
@@ -104,19 +105,31 @@ int32_t sata_read(uint32_t begin_sector, uint8_t sector_count, void *buffer){
 
     outb(HD_PORT_PRIMARY_DEVICE, MAKE_DEVICE(DEVICE_LBA_MODE, DEVICE_DRV_MASTER, (((uint8_t)(begin_sector >> 24)) & 0x0f)));
     
+    outb(HD_PORT_PRIMARY_SECTOR_COUNT, sector_count);
+
     outb(HD_PORT_PRIMARY_LBA_LOW, (uint8_t)(begin_sector));
     outb(HD_PORT_PRIMARY_LBA_MID, (uint8_t)(begin_sector >> 8));
     outb(HD_PORT_PRIMARY_LBA_HIGH, (uint8_t)(begin_sector >> 16));
 
-    outb(HD_PORT_PRIMARY_SECTOR_COUNT, sector_count);
-
     outb(HD_PORT_PRIMARY_STATUS_COMMAND, COMMAND_READ);
 
-    if(inb(HD_PORT_PRIMARY_STATUS_COMMAND) & STATUS_ERROR){
+    uint8_t status = inb(HD_PORT_PRIMARY_STATUS_COMMAND);
+    if(status & STATUS_ERROR){
         printk("Read error: status register's error=1.\n");
         return -1;
     }
-    // while((inb(HD_PORT_PRIMARY_STATUS_COMMAND) & STATUS_DRQ) == 0){}
+    printk("read status drq: %x , device: %x\n", (status), MAKE_DEVICE(DEVICE_LBA_MODE, DEVICE_DRV_MASTER, (((uint8_t)(begin_sector >> 24)) & 0x0f)));
+
+    while((status & STATUS_BUSY) || !(status & STATUS_DRQ) ){
+        status = inb(HD_PORT_PRIMARY_STATUS_COMMAND);
+    }
+    if(status & STATUS_ERROR){
+        printk("Read error: status register's error=1.\n");
+        return;
+    }
+
+    status = inb(HD_PORT_PRIMARY_STATUS_COMMAND);
+    printk("fuck status register: %x, %x\n", status, (status & STATUS_DRQ));
 
     insw(HD_PORT_PRIMARY_DATA, buffer, sector_count * 512 / 2);
 
@@ -140,6 +153,7 @@ int32_t sata_write(uint32_t begin_sector, uint8_t sector_count, void *buffer){
 
     outb(HD_PORT_PRIMARY_STATUS_COMMAND, COMMAND_WRITE);
     
+    // printk("write status drq: %x\n", (inb(HD_PORT_PRIMARY_STATUS_COMMAND) & STATUS_DRQ));
     // uint8_t status = inb(HD_PORT_PRIMARY_STATUS_COMMAND);
     // while((status & STATUS_DRQ) == 0){
     //     status = inb(HD_PORT_PRIMARY_STATUS_COMMAND);

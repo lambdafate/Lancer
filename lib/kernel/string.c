@@ -26,6 +26,18 @@ int8_t* strcpy(int8_t *dest, int8_t *src){
     return res;
 }
 
+int8_t* strncpy(int8_t *dest, int8_t *src, uint32_t bytes){
+    if(bytes <= 0){
+        return dest;
+    }
+    int8_t *res = dest;
+    while(bytes--){
+        *dest++ = *src++;
+    }
+    return res;
+}
+
+
 int8_t* str_reverse(int8_t *dest){
     uint32_t len = strlen(dest);
     if(len < 2){

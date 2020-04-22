@@ -14,6 +14,7 @@
 #include "interrupt.h"
 #include "hd.h"
 #include "print.h"
+#include "string.h"
 #include "debug.h"
 #include "io.h"
 
@@ -29,28 +30,44 @@ uint32_t sys_get_ticks(){
 }
 
 void test(){
-
     uint8_t *buffer = (uint8_t*)(0x7c00);
-    strcpy(buffer, "there is buffer                           what the fuck!!!!\n");
-
-    // printk("first buffer: %s\n", buffer);
-
-	// sys_hd_identify();
-    printk("write buffer from 0x7c00: %s\n", buffer);
-    int32_t res = sata_write(2, 1, buffer);
+    *(buffer+510) = 0xff;
+    *(buffer+511) = 0xff;
+    
+    int32_t res = sata_read(1, 1, buffer);
     if(res == -1){
-        printk("write error\n");
+        printk("read error\n");
+        return;
     }
+    printk("hello\n");
+    printk("\n%x, %x\n", *(buffer+510), *(buffer+511));
 
-    buffer = (uint8_t*)(0x7000);
-    printk("0x7000 before read: %s\n", buffer);
-	res = sata_read(2, 1, buffer);
-	if(res == -1){
-		printk("read error\n");
-	}
 
-    ASSERT(buffer == 0x7000);
-    printk("0x7000 after read: %s\n", buffer);
+    // ASSERT(*(buffer+510) == 0x55);
+    // ASSERT(*(buffer+511) == 0xaa);
+
+    // strncpy(mbrparts, buffer+446, 64);
+
+
+    // uint8_t *buffer = (uint8_t*)(0x7c00);
+    // strcpy(buffer, "there is buffer                           what the fuck!!!!\n");
+    
+	// // sys_hd_identify();
+    // printk("write buffer from 0x7c00: %s\n", buffer);
+    // int32_t res = sata_write(2, 1, buffer);
+    // if(res == -1){
+    //     printk("write error\n");
+    // }
+
+    // buffer = (uint8_t*)(0x7000);
+    // printk("0x7000 before read: %s\n", buffer);
+	// res = sata_read(2, 1, buffer);
+	// if(res == -1){
+	// 	printk("read error\n");
+	// }
+
+    // ASSERT(buffer == 0x7000);
+    // printk("0x7000 after read: %s\n", buffer);
     
 }
 
