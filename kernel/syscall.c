@@ -29,46 +29,28 @@ uint32_t sys_get_ticks(){
 	return ticks;
 }
 
+void print_mbr(struct part *p){
+    printk("boot: %x  part-type: %x  offset: %x   sum-sectors: %x\n", p->boot, p->part_type, p->sectors_offset, p->sectors_count);
+    printk("start-head: %x   start-sector: %x  start-cylinder: %x\n", p->start_head, p->start_sector, p->start_cylinder);
+    printk("end-head  : %x   end-sector  : %x  end-cylinder  : %x\n", p->end_head, p->end_sector, p->end_cylinder);
+}
+
+
 void test(){
-    uint8_t *buffer = (uint8_t*)(0x7c00);
-    *(buffer+510) = 0xff;
-    *(buffer+511) = 0xff;
-    
-    int32_t res = sata_read(1, 1, buffer);
-    if(res == -1){
-        printk("read error\n");
+    uint8_t *buffer = (uint8_t*)(0x0000);
+    if(sata_read(0, 1, buffer) == -1){
+        printk("Read error!\n");
         return;
     }
-    printk("hello\n");
-    printk("\n%x, %x\n", *(buffer+510), *(buffer+511));
+    ASSERT(*(buffer+510) == 0x55);
+    ASSERT(*(buffer+511) == 0xaa);
 
-
-    // ASSERT(*(buffer+510) == 0x55);
-    // ASSERT(*(buffer+511) == 0xaa);
-
-    // strncpy(mbrparts, buffer+446, 64);
-
-
-    // uint8_t *buffer = (uint8_t*)(0x7c00);
-    // strcpy(buffer, "there is buffer                           what the fuck!!!!\n");
+    memcpy(mbrparts, buffer+446, 64);
     
-	// // sys_hd_identify();
-    // printk("write buffer from 0x7c00: %s\n", buffer);
-    // int32_t res = sata_write(2, 1, buffer);
-    // if(res == -1){
-    //     printk("write error\n");
-    // }
-
-    // buffer = (uint8_t*)(0x7000);
-    // printk("0x7000 before read: %s\n", buffer);
-	// res = sata_read(2, 1, buffer);
-	// if(res == -1){
-	// 	printk("read error\n");
-	// }
-
-    // ASSERT(buffer == 0x7000);
-    // printk("0x7000 after read: %s\n", buffer);
-    
+    for(uint32_t i=0; i < 4; i++){
+        printk("\n    ******     %x     *******\n", i);
+        print_mbr(&mbrparts[i]);
+    }
 }
 
 

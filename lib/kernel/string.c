@@ -9,6 +9,23 @@ void memory_set(uint8_t* dest, uint32_t size, uint8_t value){
     }
 }
 
+void memset(uint8_t* dest, uint32_t size, uint8_t value){
+    memory_set(dest, size, value);
+}
+
+int8_t* memcpy(int8_t *dest, int8_t *src, uint32_t bytes){
+    if(bytes <= 0){
+        return dest;
+    }
+    int8_t *res = dest;
+    while(bytes--){
+        *dest++ = *src++;
+    }
+    return res;
+}
+
+
+
 uint32_t strlen(int8_t *str){
     uint32_t len = 0;
     while(*str++){
@@ -26,16 +43,7 @@ int8_t* strcpy(int8_t *dest, int8_t *src){
     return res;
 }
 
-int8_t* strncpy(int8_t *dest, int8_t *src, uint32_t bytes){
-    if(bytes <= 0){
-        return dest;
-    }
-    int8_t *res = dest;
-    while(bytes--){
-        *dest++ = *src++;
-    }
-    return res;
-}
+
 
 
 int8_t* str_reverse(int8_t *dest){
