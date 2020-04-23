@@ -6,6 +6,10 @@
 #include "string.h"
 #include "debug.h"
 
+void sata_wait();
+static void sata_exec_command(uint8_t command, uint32_t begin_sector, uint8_t sector_count);
+static int32_t sata_check_status();
+
 struct disk sata0_master;
 // struct part mbrparts[4];
 
@@ -21,8 +25,6 @@ void hd_init(){
 
     // we support only one disk now.
     strcpy(sata0_master.name, "sata0-master");
-
-    
 }
 
 
@@ -35,30 +37,11 @@ void handler_harddisk(){
 // handle 'int 0x80' to get hd identify.
 // run in ring0
 void sys_hd_identify(){
-    uint8_t wait = 100000;
-    while((inb(HD_PORT_PRIMARY_STATUS_COMMAND) & STATUS_BUSY) && wait--){}
-    if(wait == 0){
-        printk("Identify error: hard disk busy.\n");
-        return;
-    }
-    outb(HD_PORT_PRIMARY_DEVICE, MAKE_DEVICE(DEVICE_LBA_MODE, DEVICE_DRV_MASTER, 0));
+    
+    sata_wait();
+    sata_exec_command(COMMAND_IDENTIFY, 0, 0);
 
-    outb(HD_PORT_PRIMARY_SECTOR_COUNT, 0);
-    outb(HD_PORT_PRIMARY_LBA_LOW, 0);
-    outb(HD_PORT_PRIMARY_LBA_MID, 0);
-    outb(HD_PORT_PRIMARY_LBA_HIGH, 0);
-
-    outb(HD_PORT_PRIMARY_STATUS_COMMAND, COMMAND_IDENTIFY);
-    uint8_t status = inb(HD_PORT_PRIMARY_STATUS_COMMAND);
-    if(status == 0){
-        printk("Identify: the drive does not exist\n");
-        return;
-    }
-    printk("status register: %x\n", status);
-    while((status & STATUS_BUSY) || !(status & STATUS_DRQ) ){
-        status = inb(HD_PORT_PRIMARY_STATUS_COMMAND);
-    }
-    if(status & STATUS_ERROR){
+    if(sata_check_status()){
         printk("Identify error: status register's error=1.\n");
         return;
     }
@@ -93,44 +76,15 @@ void sys_hd_identify(){
     printk("    48 search: %s\n", (hd_info[83] & 0x0400) ? "YES": "NO");
 }
 
-void sata_wait(){
-    while(inb(HD_PORT_PRIMARY_STATUS_COMMAND) & STATUS_BUSY){}
-}
-
 int32_t sata_read(uint32_t begin_sector, uint8_t sector_count, void *buffer){
-    ASSERT(sector_count == 1);
-    ASSERT(begin_sector > 0);
 
     sata_wait();
+    sata_exec_command(COMMAND_READ, begin_sector, sector_count);
 
-    outb(HD_PORT_PRIMARY_DEVICE, MAKE_DEVICE(DEVICE_LBA_MODE, DEVICE_DRV_MASTER, (((uint8_t)(begin_sector >> 24)) & 0x0f)));
-    
-    outb(HD_PORT_PRIMARY_SECTOR_COUNT, sector_count);
-
-    outb(HD_PORT_PRIMARY_LBA_LOW, (uint8_t)(begin_sector));
-    outb(HD_PORT_PRIMARY_LBA_MID, (uint8_t)(begin_sector >> 8));
-    outb(HD_PORT_PRIMARY_LBA_HIGH, (uint8_t)(begin_sector >> 16));
-
-    outb(HD_PORT_PRIMARY_STATUS_COMMAND, COMMAND_READ);
-
-    uint8_t status = inb(HD_PORT_PRIMARY_STATUS_COMMAND);
-    if(status & STATUS_ERROR){
+    if(sata_check_status()){
         printk("Read error: status register's error=1.\n");
         return -1;
     }
-    printk("read status drq: %x , device: %x\n", (status), MAKE_DEVICE(DEVICE_LBA_MODE, DEVICE_DRV_MASTER, (((uint8_t)(begin_sector >> 24)) & 0x0f)));
-
-    while((status & STATUS_BUSY) || !(status & STATUS_DRQ) ){
-        status = inb(HD_PORT_PRIMARY_STATUS_COMMAND);
-    }
-    if(status & STATUS_ERROR){
-        printk("Read error: status register's error=1.\n");
-        return;
-    }
-
-    status = inb(HD_PORT_PRIMARY_STATUS_COMMAND);
-    printk("fuck status register: %x, %x\n", status, (status & STATUS_DRQ));
-
     insw(HD_PORT_PRIMARY_DATA, buffer, sector_count * 512 / 2);
 
     ASSERT((inb(HD_PORT_PRIMARY_STATUS_COMMAND) & STATUS_DRQ) == 0);
@@ -138,41 +92,41 @@ int32_t sata_read(uint32_t begin_sector, uint8_t sector_count, void *buffer){
 }
 
 int32_t sata_write(uint32_t begin_sector, uint8_t sector_count, void *buffer){
-    ASSERT(sector_count == 1);
-    ASSERT(begin_sector > 0);
-
+    
     sata_wait();
-    
-    outb(HD_PORT_PRIMARY_DEVICE, MAKE_DEVICE(DEVICE_LBA_MODE, DEVICE_DRV_MASTER, (((uint8_t)(begin_sector >> 24)) & 0x0f)));
-    
-    outb(HD_PORT_PRIMARY_LBA_LOW, (uint8_t)(begin_sector));
-    outb(HD_PORT_PRIMARY_LBA_MID, (uint8_t)(begin_sector >> 8));
-    outb(HD_PORT_PRIMARY_LBA_HIGH, (uint8_t)(begin_sector >> 16));
+    sata_exec_command(COMMAND_WRITE, begin_sector, sector_count);
 
-    outb(HD_PORT_PRIMARY_SECTOR_COUNT, sector_count);
-
-    outb(HD_PORT_PRIMARY_STATUS_COMMAND, COMMAND_WRITE);
-    
-    // printk("write status drq: %x\n", (inb(HD_PORT_PRIMARY_STATUS_COMMAND) & STATUS_DRQ));
-    // uint8_t status = inb(HD_PORT_PRIMARY_STATUS_COMMAND);
-    // while((status & STATUS_DRQ) == 0){
-    //     status = inb(HD_PORT_PRIMARY_STATUS_COMMAND);
-    // }
+    if(sata_check_status()){
+        printk("Write error: status register's error=1.\n");
+        return -1;
+    }
 
     outsw(HD_PORT_PRIMARY_DATA, buffer, sector_count * 512 / 2);
-
-    // uint32_t times = sector_count * 512 / 2;
-    // uint16_t *temp = (uint16_t*)buffer;
-    // while(times--){
-    //     if(inb(HD_PORT_PRIMARY_STATUS_COMMAND) & STATUS_ERROR){
-    //         printk("Write error: status register's error=1.\n");
-    //         return -1;
-    //     }
-    //     outw(HD_PORT_PRIMARY_DATA, *temp);
-    //     outb(HD_PORT_PRIMARY_STATUS_COMMAND, COMMAND_FLUSH);
-    //     temp++;
-    // }
     return sector_count * 512;
 }
 
 
+
+void sata_wait(){
+    while(inb(HD_PORT_PRIMARY_STATUS_COMMAND) & STATUS_BUSY){}
+}
+static void sata_exec_command(uint8_t command, uint32_t begin_sector, uint8_t sector_count){
+    outb(HD_PORT_PRIMARY_ERROR_FEATURES, 0);
+    outb(HD_PORT_PRIMARY_SECTOR_COUNT, sector_count);
+    outb(HD_PORT_PRIMARY_LBA_LOW, (uint8_t)(begin_sector));
+    outb(HD_PORT_PRIMARY_LBA_MID, (uint8_t)(begin_sector >> 8));
+    outb(HD_PORT_PRIMARY_LBA_HIGH, (uint8_t)(begin_sector >> 16));
+    outb(HD_PORT_PRIMARY_DEVICE, MAKE_DEVICE(DEVICE_LBA_MODE, DEVICE_DRV_MASTER, (((uint8_t)(begin_sector >> 24)) & 0x0f)));
+    
+    outb(HD_PORT_PRIMARY_STATUS_COMMAND, command);
+}
+
+// if error-> return 1
+// else -> return 0
+static int32_t sata_check_status(){
+    uint8_t status = inb(HD_PORT_PRIMARY_STATUS_COMMAND);
+    while((status & STATUS_BUSY) || !(status & STATUS_DRQ)){
+        status = inb(HD_PORT_PRIMARY_STATUS_COMMAND);
+    }
+    return status & STATUS_ERROR;
+}

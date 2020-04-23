@@ -47,11 +47,11 @@ struct part{
     uint32_t boot : 8;      // boot indicator, 0x80=bootable, 0=no bootable, else=illegal
     uint32_t start_head : 8;
     uint32_t start_sector : 6;
-    uint32_t start_sylinder : 10;
+    uint32_t start_cylinder : 10;
     uint32_t part_type : 8;
     uint32_t end_head : 8;
     uint32_t end_sector : 6;
-    uint32_t end_sylinder : 10;
+    uint32_t end_cylinder : 10;
     uint32_t sectors_offset : 32;
     uint32_t sectors_count : 32;
 }__attribute((packed));
