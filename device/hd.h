@@ -57,8 +57,9 @@ struct part{
 }__attribute((packed));
 
 
-
 struct part mbrparts[4];
+struct part logicalparts[8];
+
 
 void hd_init();
 void handler_harddisk();
