@@ -2,7 +2,7 @@
 #define _KERNEL_GLOBAL_H
 #include "stdint.h"
 
-#define KERNEL_STACKTOP                       0x80000
+#define KERNEL_STACKTOP                       0xc00a0000
 
 #define RPL0                                  0
 #define RPL1                                  1
@@ -11,7 +11,7 @@
 #define TI_GDT                                0
 #define TI_LDT                                1 
 
-#define GDT_ADDRESS                           0x00080000
+#define GDT_ADDRESS                           0xc0080000
 #define GDT_SIZE                              9
 #define GDT_Limit                             (GDT_SIZE*8-1)
 
@@ -66,7 +66,7 @@ typedef struct{
     uint32_t ssp;
 }TSS;                                       // 27 * 4 = 108bytes
 
-#define TSS_ADDRESS                          0x8f000
+#define TSS_ADDRESS                          0xc008f000
 #define TSS_LIMIT                            (sizeof(TSS)-1)
 
 

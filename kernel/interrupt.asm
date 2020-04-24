@@ -37,7 +37,7 @@ interrupt_handler_entry%1:
     jmp handler_finish%1
 
 user_interrupt%1:
-    mov esp, 0x80000
+    mov esp, 0xc00a0000
     push %1
     call [interrupt_handler_table + %1*4]
     add esp, 4
@@ -77,7 +77,7 @@ interrupt_handler_entry%1:
     push fs
     pushad
 
-    mov esp, 0x80000
+    mov esp, 0xc00a0000
     ; push %1
     call [interrupt_handler_table + %1*4]
     ; add esp, 4
@@ -115,7 +115,7 @@ interrupt_handler_entry%1:
     push fs
     pushad
     
-    mov esp, 0x80000
+    mov esp, 0xc00a0000
     ; push %1
     call [interrupt_handler_table + %1*4]    ; this maybe use 'eax' as return value.
     ; add esp, 4

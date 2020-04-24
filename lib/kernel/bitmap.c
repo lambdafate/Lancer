@@ -25,7 +25,6 @@ uint8_t bitmap_status(BITMAP* bitmap, uint32_t bit_index){
 
 
 int32_t bitmap_malloc(BITMAP* bitmap, uint32_t bit_count){
-    ASSERT(bitmap->bits == 0x60000);
     ASSERT(bitmap != NULL && bitmap->bits != NULL);
 
     if(bit_count > bitmap->size || bit_count == 0){

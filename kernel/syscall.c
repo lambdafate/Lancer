@@ -46,10 +46,40 @@ void test(){
     ASSERT(*(buffer+511) == 0xaa);
 
     memcpy(mbrparts, buffer+446, 64);
-    
+    uint32_t logical_index = 0;
+
     for(uint32_t i=0; i < 4; i++){
-        printk("\n    ******     %x     *******\n", i);
-        print_mbr(&mbrparts[i]);
+        if(mbrparts[i].part_type == 0x00){
+            continue;
+        }
+        if(mbrparts[i].part_type != 0x05){
+            printk("\n    ******     %x: master partition    *******\n", i);
+            print_mbr(&mbrparts[i]);
+            continue;
+        }
+        // it is a extend partition
+        printk("\n    ******     %x: extend partition   *******\n", i);
+
+        ASSERT(sata_read(mbrparts[i].sectors_offset, 1, buffer) != -1);
+        memcpy(&logicalparts[logical_index], buffer+446, 32);
+        print_mbr(&logicalparts[logical_index++]);
+
+        ASSERT(*(buffer+510) == 0x55);
+        ASSERT(*(buffer+511) == 0xaa);
+
+        while(logical_index < 8 && logicalparts[logical_index].part_type != 0){
+            uint32_t begin_sector = mbrparts[i].sectors_offset + logicalparts[logical_index++].sectors_offset;
+            
+            sata_read(begin_sector, 1, buffer);
+            memcpy(&logicalparts[logical_index], buffer+446, 32);
+            
+            ASSERT(*(buffer+510) == 0x55);
+            ASSERT(*(buffer+511) == 0xaa);
+
+            printk("\n    ******     extend partition    *******\n");
+            print_mbr(&logicalparts[logical_index++]);
+        }    
+
     }
 }
 

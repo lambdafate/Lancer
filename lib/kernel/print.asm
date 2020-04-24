@@ -190,15 +190,15 @@ rollscreen:
     mov ds, ax
     mov es, ax
 
-    mov esi, 0xb8000+160
-    mov edi, 0xb8000
+    mov esi, 0xc00b8000+160
+    mov edi, 0xc00b8000
     mov ecx, 4000-160
     cld
     rep movsb
 
     mov al, ' '
     mov ah, 0x00
-    mov ebx, 0xb8000
+    mov ebx, 0xc00b8000
     add ebx, (2000-80)<<1
     mov ecx, 80
 _clearlast:

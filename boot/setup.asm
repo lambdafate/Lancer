@@ -211,7 +211,7 @@ flush:
 flushpage:
     mov ax, StackSelector
     mov ss, ax
-    mov esp, 0xc0080000 
+    mov esp, 0xc00a0000 
                                 ; init segment register before into kernel
     mov ax, DataSelector
     mov ds, ax  
