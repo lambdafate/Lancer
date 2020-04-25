@@ -11,7 +11,82 @@ static void sata_exec_command(uint8_t command, uint32_t begin_sector, uint8_t se
 static int32_t sata_check_status();
 
 struct disk sata0_master;
-// struct part mbrparts[4];
+
+// detect hard disk's partitions
+void detect_disk_parts(struct disk *disk){
+    disk->mpart_num = 0;
+    disk->lpart_num = 0;
+
+    struct part parts_table[4];
+
+    uint8_t *buffer = (uint8_t*)(0xc0000000);
+    if(sata_read(0, 1, buffer) == -1){
+        printk("Read error!\n");
+        return;
+    }
+    ASSERT(*(buffer+510) == 0x55);
+    ASSERT(*(buffer+511) == 0xaa);
+
+    memcpy(parts_table, buffer+446, 64);
+    uint32_t logical_index = 0;
+
+    for(uint32_t i=0; i < 4; i++){
+        // empty partition, just break;
+        if(parts_table[i].part_type == 0x00){
+            break;
+        }
+        // it's a master partition.
+        if(parts_table[i].part_type != 0x05){
+            // printk("\n    ******     %x: master partition    *******\n", i);
+            // print_mbr(&mbrparts[i]);
+            disk->master_parts[disk->mpart_num].start_sector = parts_table[i].sectors_offset;
+            disk->master_parts[disk->mpart_num].sector_count = parts_table[i].sectors_count; 
+            disk->mpart_num++;
+            continue;
+        }
+
+        // it is a extend partition
+        // we assume extend partition in last.
+        // printk("\n    ******     %x: extend partition   *******\n", i);
+        
+        uint32_t extend_part_offset = parts_table[i].sectors_offset;
+        uint32_t sub_extend_part_offset = 0;
+
+        while(disk->lpart_num < LOGICAL_PARTITION_MAX_NUM){
+            uint32_t begin_sector = extend_part_offset + sub_extend_part_offset;
+            
+            sata_read(begin_sector, 1, buffer);
+            memcpy(parts_table, buffer+446, 32);
+            ASSERT(*(buffer+510) == 0x55);
+            ASSERT(*(buffer+511) == 0xaa);
+
+            disk->logical_parts[disk->lpart_num].start_sector = begin_sector + parts_table[0].sectors_offset;
+            disk->logical_parts[disk->lpart_num].sector_count = parts_table[0].sectors_count;
+            disk->lpart_num++;
+
+            sub_extend_part_offset = parts_table[1].sectors_offset;
+
+            if(parts_table[1].part_type == 0x00){
+                break;
+            }
+        }    
+
+        return;
+    }
+}
+
+void print_disk_parts(struct disk *disk){
+    for(uint32_t i = 0; i < disk->mpart_num; i++){
+        printk("master-part %x :    ", i);
+        printk("start-sector: %x    sector-count: %x\n", disk->master_parts[i].start_sector, disk->master_parts[i].sector_count);
+    }
+
+    for(uint32_t i = 0; i < disk->lpart_num; i++){
+        printk("logical-part %x :     ", i);
+        printk("start-sector: %x    sector-count: %x\n", disk->logical_parts[i].start_sector, disk->logical_parts[i].sector_count);
+    }
+}
+
 
 void hd_init(){
     uint8_t *hd_num = (uint8_t*)(0x475);
@@ -25,6 +100,10 @@ void hd_init(){
 
     // we support only one disk now.
     strcpy(sata0_master.name, "sata0-master");
+
+    detect_disk_parts(&sata0_master);
+    print_disk_parts(&sata0_master);
+
 }
 
 

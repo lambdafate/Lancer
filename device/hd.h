@@ -31,18 +31,26 @@
 #define STATUS_DRQ                              0b00001000
 #define STATUS_ERROR                            0b00000001
 
+#define LOGICAL_PARTITION_MAX_NUM               8
+
+
 struct partition{
+    uint8_t name[16];
     uint32_t start_sector;
     uint32_t sector_count;
-    uint8_t name[16];            
 };
 
 struct disk{
     uint8_t name[16];
+    uint32_t mpart_num;
+    uint32_t lpart_num;
     struct partition master_parts[4];
-    struct partition logical_parts[8];
+    struct partition logical_parts[LOGICAL_PARTITION_MAX_NUM];
 };
 
+
+
+// partition struction in MBR and EBR
 struct part{
     uint32_t boot : 8;      // boot indicator, 0x80=bootable, 0=no bootable, else=illegal
     uint32_t start_head : 8;
@@ -54,11 +62,7 @@ struct part{
     uint32_t end_cylinder : 10;
     uint32_t sectors_offset : 32;
     uint32_t sectors_count : 32;
-}__attribute((packed));
-
-
-struct part mbrparts[4];
-struct part logicalparts[8];
+}__attribute__((packed));
 
 
 void hd_init();
