@@ -4,7 +4,7 @@
 #   
 
 BUILDDIR	= ./build
-LIB			= -I lib/kernel/ -I lib/ -I kernel/ -I device/
+LIB			= -I lib/kernel/ -I lib/ -I kernel/ -I device/ -I fs/
 GCCARGS		= -m32 -fno-stack-protector
 GCCCompile  = gcc $(LIB) $(GCCARGS)
 
@@ -16,7 +16,7 @@ LANCER_OBJECT	=  $(BUILDDIR)/lancer.o $(BUILDDIR)/interrupt_c.o \
 	$(BUILDDIR)/interrupt_asm.o $(BUILDDIR)/string.o $(BUILDDIR)/bitmap.o \
 	$(BUILDDIR)/malloc.o $(BUILDDIR)/schedule.o $(BUILDDIR)/global.o \
 	$(BUILDDIR)/keyboard.o $(BUILDDIR)/syscall.o $(BUILDDIR)/print_c.o \
-	$(BUILDDIR)/page.o $(BUILDDIR)/hd.o
+	$(BUILDDIR)/page.o $(BUILDDIR)/hd.o $(BUILDDIR)/fs.o
 
 
 # BOOT and SETUP
@@ -64,6 +64,9 @@ $(BUILDDIR)/timer.o: ./device/timer.c
 $(BUILDDIR)/keyboard.o: ./device/keyboard.c
 	$(GCCCompile) -c $^ -o $@
 $(BUILDDIR)/hd.o: ./device/hd.c
+	$(GCCCompile) -c $^ -o $@
+
+$(BUILDDIR)/fs.o: ./fs/fs.c
 	$(GCCCompile) -c $^ -o $@
 
 
