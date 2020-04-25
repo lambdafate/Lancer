@@ -36,7 +36,7 @@
 
 struct partition{
     uint8_t name[16];
-    uint32_t start_sector;
+    uint32_t start_sector;             
     uint32_t sector_count;
 };
 
@@ -65,8 +65,11 @@ struct part{
 }__attribute__((packed));
 
 
+extern struct disk sata0_master;
+
 void hd_init();
 void handler_harddisk();
+
 void sys_hd_identify();
 int32_t sata_read(uint32_t begin_sector, uint8_t count, void *buffer);
 int32_t sata_write(uint32_t begin_sector, uint8_t sector_count, void *buffer);

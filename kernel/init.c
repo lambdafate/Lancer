@@ -4,6 +4,7 @@
 #include "schedule.h"
 #include "keyboard.h"
 #include "hd.h"
+#include "fs.h"
 
 void lancer_init(){
     idt_init();
@@ -17,4 +18,6 @@ void lancer_init(){
     kb_init();
 
     hd_init();
+
+    fs_init();
 }
