@@ -22,10 +22,10 @@ void handler_page_fault(uint8_t vector){
     void *linear = NULL;
     asm volatile("movl %%cr2, %%eax":"=a"(linear));
 
-    printk("current-task: %s\n", current_task->name);
+    // printk("current-task: %s\n", current_task->name);
     // printk("page fault happens!\n");
-    printk("cause linear address: ");
-    put_hex(linear);
+    // printk("cause linear address: ");
+    // put_hex(linear);
     // printk("  error code: ");
     // put_hex(current_task->stackframe.error_code);
     // printk("\n");
@@ -52,7 +52,7 @@ void handler_page_fault(uint8_t vector){
         init_default_page(&pet->pages[pet_index], frame);
 
     }
-    printk(" malloc page address: %x\n", frame);
+    // printk(" malloc page address: %x\n", frame);
 }
 
 // init (user mode)task's pdt, it will be load to cr3 register

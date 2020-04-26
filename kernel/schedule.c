@@ -145,7 +145,8 @@ void init_tasks(){
 		tasks[i].priority = TASK_PRIORITY;
 		tasks[i].run_ticks = 0;
 		tasks[i].pdt	= 0;
-		tasks[i].next	= 0;
+		// tasks[i].next	= 0;
+		memset(tasks[i].fds, TASK_MAX_FD_NUM*sizeof(struct file_descriptor), 0);
 		strcpy(tasks[i].name, init_name);
 	}
 }

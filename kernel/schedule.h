@@ -1,9 +1,13 @@
 #ifndef _KERNEL_SCHEDULE_H
 #define _KERNEL_SCHEDULE_H
 #include "stdint.h"
+#include "fs.h"
 
 #define PCB_NAME_SIZE                   32
+
 #define TASK_MAX_NUM                    30
+#define TASK_MAX_FD_NUM                  8
+
 #define TASK_TICKS                       3
 #define TASK_PRIORITY                    3
 #define TASK_RING0                       0
@@ -33,7 +37,7 @@ typedef struct _task{
     int32_t priority;
     uint32_t run_ticks;
     int8_t name[PCB_NAME_SIZE];
-    struct _task *next;
+    struct file_descriptor *fds[TASK_MAX_FD_NUM];    
 }TASK;
 
 extern TASK *current_task;

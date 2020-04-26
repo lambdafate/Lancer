@@ -52,24 +52,46 @@ void* kmalloc(){
 
 
 
-// malloc a 4k virtual page by searching pdt and pet.
-void* vmalloc(){
+// malloc 4k virtual pages by searching pdt and pet.
+// use in kernel mode.
+void* vmalloc(uint32_t size){
+    uint32_t page_num = size / 4096 + (size % 4096 ? 1: 0);
+    // printk("pahe_num: %x,  sector: %x, size: %x\n", page_num, size/512, size);
+    ASSERT(page_num > 0 && page_num < 1024);
+
     page_table_t *pdt = get_pdt();
-    for(uint32_t pdt_index = 0; pdt_index < 768; pdt_index++){    // 768(and above is system own)
+    uint32_t pdt_index, pet_index = 0, free = 0;
+    for(pdt_index = 769; pdt_index < 1024; pdt_index++){ 
         if(pdt->pages[pdt_index].present == 0){
-            void *linear = get_page_chunk(pdt_index, 0);
-            return linear;
+            break;
         }
         page_table_t *pet = get_pet(pdt_index);
-        for(uint32_t pet_index = 0; pet_index < 1024; pet_index++){
+        for(pet_index = 0; pet_index < 1024; pet_index++){
             if(pet->pages[pet_index].present == 1){
                 continue;
             }
-            // we find it.
-            void *linear = get_page_chunk(pdt_index, pet_index);
-            return linear;
+            uint32_t i = pet_index + 1;
+            free = 1;
+            while(free < page_num && i < 1024 && pet->pages[i].present == 0){
+                i++;
+                free++;
+            }
+            if(free == page_num){
+                break;
+            }
+            free = 0;
+            pet_index = i;
+        }
+        if(free == page_num){
+            break;
         }
     }
+    ASSERT(pdt_index != 1024);
+    page_table_t *pet = get_pet(pdt_index);
+    for(uint32_t i = 0; i < page_num; i++){
+        uint32_t just_page_fault = *(uint32_t*)(get_page_chunk(pdt_index, pet_index+i));
+    }
+    return get_page_chunk(pdt_index, pet_index);
 }
 
 
