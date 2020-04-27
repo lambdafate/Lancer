@@ -9,6 +9,8 @@
 #include "syscall.h"
 #include "page.h"
 #include "hd.h"
+#include "fs.h"
+#include "fs_api.h"
 
 void welcome();
 void _task0();
@@ -35,9 +37,18 @@ int main(){
 	run_new_task("scan-keyboard-input", task_keyboard);     
 	run_new_task("test-task", _task0);     
 
-	put_str("i am here\n");
-	switch_to_user_mode();
+	put_str("before opening\n");
+	print_entrys();
+	ASSERT(open_file(current_task, "test", 0) != -1);
+	ASSERT(open_file(current_task, "test1", 0) != -1);
+	put_str("after opening\n");
+	print_entrys();
+	
+	while(1){}
 
+
+
+	switch_to_user_mode();
 	while(1){}
 }
 
@@ -47,6 +58,7 @@ void welcome(){
 	printk("[/kernel/lancer       ]: ");
 	printk("welcome to lancer!\n");
 }
+
 
 
 
