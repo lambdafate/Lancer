@@ -10,7 +10,7 @@
 #define SECTOR_SIZE                     512
 #define BLOCK_SIZE                      SECTOR_SIZE
 
-#define FS_MAGIC                        0x12345678
+#define FS_MAGIC                        0x12345670
 
 enum file_types{
     FT_REGULAR, FT_DIRECTORY, FT_UNKNOWN
@@ -30,6 +30,7 @@ struct super_block *sb;
 BITMAP block_bitmap;
 BITMAP inode_bitmap;
 struct inode *inode_table;
+struct dir_entry *dir_buffer;
 
 
 void fs_init();

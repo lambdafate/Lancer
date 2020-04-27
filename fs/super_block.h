@@ -24,8 +24,7 @@ struct super_block{
     uint32_t dir_entry_size;
 
     uint8_t padding[460];
-}__attribute__((packed));
-
+}__attribute((packed));
 
 
 #endif

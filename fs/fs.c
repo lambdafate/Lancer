@@ -14,7 +14,9 @@
 #include "malloc.h"
 #include "string.h"
 #include "print.h"
+#include "fs_api.h"
 #include "debug.h"
+
 
 void *get_super_block(struct partition *part);
 
@@ -28,7 +30,6 @@ void fs_init(){
 
     // malloc space for block_bitmap, inode_bitmap, inode_table
     init_fs_meta();
-
 }
 
 void check_fs(){
@@ -80,6 +81,8 @@ void init_fs_meta(){
     printk("inode-table sectors : %x  inode-table: %x\n", sb->inode_table_sectors, inode_table);
     sata_read(sb->inode_table_lba, sb->inode_table_sectors, inode_table);
 
+    dir_buffer = (struct dir_entry*)vmalloc(INODE_MAX_BLOCKS_NUM * BLOCK_SIZE);
+    sata_read(sb->data_lba, INODE_MAX_BLOCKS_NUM*BLOCK_SIZE/SECTOR_SIZE, dir_buffer);
 }
 
 
@@ -138,15 +141,18 @@ void format_part(struct partition *part){
     // write inode table
     struct inode *root = (struct inode*)(buffer);
     root->i_no = 0;
+    root->i_nlink = 3;
     root->i_size = sb->dir_entry_size * 2;          // root dir: . and ..
-    root->i_blocks[0] = sb->data_lba;
+    for(uint32_t i = 0; i < INODE_MAX_BLOCKS_NUM ; i++){
+        root->i_blocks[i] = sb->data_lba + i * BLOCK_SIZE / SECTOR_SIZE;
+    }
     sata_write(sb->inode_table_lba, 1, buffer);
+    memset(buffer, sizeof(struct inode), 0);
     for(uint32_t i = 1; i < sb->inode_table_sectors; i++){
         sata_write(sb->inode_table_lba+i, 1, buffer);
     }
 
     // write (. and .. dir entry) in root dir
-    memset(buffer, SECTOR_SIZE, 0);
     struct dir_entry *de = (struct dir_entry*)(buffer);
     de->file_type = FT_DIRECTORY;
     strcpy(de->name, ".");
@@ -156,7 +162,7 @@ void format_part(struct partition *part){
     strcpy(de->name, "..");
     de->file_type = FT_DIRECTORY;
 
-    sata_write(sb->data_lba, 1, buffer); 
+    sata_write(sb->data_lba, 1, buffer);
 }
 
 
