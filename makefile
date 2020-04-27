@@ -16,7 +16,7 @@ LANCER_OBJECT	=  $(BUILDDIR)/lancer.o $(BUILDDIR)/interrupt_c.o \
 	$(BUILDDIR)/interrupt_asm.o $(BUILDDIR)/string.o $(BUILDDIR)/bitmap.o \
 	$(BUILDDIR)/malloc.o $(BUILDDIR)/schedule.o $(BUILDDIR)/global.o \
 	$(BUILDDIR)/keyboard.o $(BUILDDIR)/syscall.o $(BUILDDIR)/print_c.o \
-	$(BUILDDIR)/page.o $(BUILDDIR)/hd.o $(BUILDDIR)/fs.o
+	$(BUILDDIR)/page.o $(BUILDDIR)/hd.o $(BUILDDIR)/fs.o $(BUILDDIR)/fs_api.o
 
 
 # BOOT and SETUP
@@ -68,7 +68,8 @@ $(BUILDDIR)/hd.o: ./device/hd.c
 
 $(BUILDDIR)/fs.o: ./fs/fs.c
 	$(GCCCompile) -c $^ -o $@
-
+$(BUILDDIR)/fs_api.o: ./fs/fs_api.c
+	$(GCCCompile) -c $^ -o $@
 
 $(BUILDDIR)/LANCER: $(LANCER_OBJECT)
 	ld -Ttext 0xc0010000 -e main -m elf_i386 -o $@ $^ && \
